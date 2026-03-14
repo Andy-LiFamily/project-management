@@ -369,6 +369,10 @@ const submitFeature = async () => {
     ElMessage.warning('请输入功能名称')
     return
   }
+  if (!featureForm.value.id) {
+    ElMessage.warning('功能ID错误')
+    return
+  }
   try {
     const res = await fetch(API_URL + '/feature/' + featureForm.value.id, {
       method: 'PUT',
@@ -380,8 +384,13 @@ const submitFeature = async () => {
       ElMessage.success('更新成功')
       featureDialogVisible.value = false
       fetchAllFeatures()
+    } else {
+      ElMessage.error(data.message || '更新失败')
     }
-  } catch (e) { ElMessage.error('更新失败') }
+  } catch (e) { 
+    console.error(e)
+    ElMessage.error('更新失败: ' + e.message) 
+  }
 }
 
 // Task functions
