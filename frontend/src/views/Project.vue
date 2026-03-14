@@ -14,8 +14,12 @@
                   <el-table-column prop="f_feature_name" label="功能名称" width="150" />
                   <el-table-column prop="f_purpose" label="目的" show-overflow-tooltip />
                   <el-table-column prop="f_owner_name" label="负责人" width="100" />
-                  <el-table-column prop="f_create_date" label="创建日期" width="100" />
-                  <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
+                  <el-table-column label="创建日期" width="100">
+                    <template #default="{ row }">{{ formatDate(row.f_create_date) }}</template>
+                  </el-table-column>
+                  <el-table-column label="预计完成日期" width="120">
+                    <template #default="{ row }">{{ formatDate(row.f_target_date) }}</template>
+                  </el-table-column>
                   <el-table-column label="状态" width="80">
                     <template #default="{ row }">
                       <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
@@ -39,8 +43,12 @@
                   <el-table-column prop="f_feature_name" label="功能名称" width="150" />
                   <el-table-column prop="f_purpose" label="目的" show-overflow-tooltip />
                   <el-table-column prop="f_owner_name" label="负责人" width="100" />
-                  <el-table-column prop="f_create_date" label="创建日期" width="100" />
-                  <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
+                  <el-table-column label="创建日期" width="100">
+                    <template #default="{ row }">{{ formatDate(row.f_create_date) }}</template>
+                  </el-table-column>
+                  <el-table-column label="预计完成日期" width="120">
+                    <template #default="{ row }">{{ formatDate(row.f_target_date) }}</template>
+                  </el-table-column>
                   <el-table-column label="状态" width="80">
                     <template #default="{ row }">
                       <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
@@ -63,11 +71,13 @@
       </el-table-column>
       <el-table-column prop="f_project_name" label="项目名称" />
       <el-table-column prop="f_description" label="描述" show-overflow-tooltip />
-      <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
+      <el-table-column label="预计完成日期" width="120">
+        <template #default="{ row }">{{ formatDate(row.f_target_date) }}</template>
+      </el-table-column>
       <el-table-column prop="f_create_user" label="创建人" width="100">
         <template #default="{ row }">{{ row.f_create_user || '-' }}</template>
       </el-table-column>
-      <el-table-column prop="f_create_time" label="创建时间" width="120">
+      <el-table-column label="创建时间" width="120">
         <template #default="{ row }">{{ formatDate(row.f_create_time) }}</template>
       </el-table-column>
       <el-table-column label="操作" width="200">
@@ -161,7 +171,9 @@
     <el-dialog v-model="taskListVisible" title="工作分工列表" width="900px">
       <el-table :data="featureTasks" border>
         <el-table-column prop="f_task_content" label="工作内容" />
-        <el-table-column prop="f_target_date" label="预计完工日期" width="120" />
+        <el-table-column label="预计完工日期" width="120">
+          <template #default="{ row }">{{ formatDate(row.f_target_date) }}</template>
+        </el-table-column>
         <el-table-column prop="f_owner_name" label="负责人" width="100" />
         <el-table-column prop="f_progress" label="进度%" width="80" />
         <el-table-column prop="f_supplier_name" label="供应商" width="120" />
