@@ -26,7 +26,7 @@ const router = useRouter()
 const form = reactive({ userId: '', password: '' })
 const loading = ref(false)
 
-const API_URL = import.meta.env.VITE_API_URL || '/api/pm'
+const API_URL = import.meta.env.PROD ? 'https://pm-backend.zeabur.app' + '/api/pm' : import.meta.env.VITE_API_URL || '/api/pm'
 
 const handleLogin = async () => {
   if (!form.userId || !form.password) {
