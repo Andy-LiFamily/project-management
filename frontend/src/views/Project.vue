@@ -63,7 +63,9 @@
       <el-table-column prop="f_project_name" label="项目名称" />
       <el-table-column prop="f_description" label="描述" show-overflow-tooltip />
       <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
-      <el-table-column prop="f_create_user" label="创建人" width="100" />
+      <el-table-column prop="f_create_user" label="创建人" width="100">
+        <template #default="{ row }">{{ row.f_create_user || '-' }}</template>
+      </el-table-column>
       <el-table-column prop="f_create_time" label="创建时间" width="120">
         <template #default="{ row }">{{ formatDate(row.f_create_time) }}</template>
       </el-table-column>

@@ -12,17 +12,17 @@
         <el-timeline-item
           v-for="item in versions"
           :key="item.f_id"
-          :timestamp="item.f_create_time"
+          :timestamp="formatDate(item.f_create_time)"
           placement="top"
         >
           <el-card>
             <h4>v{{ item.f_version }}</h4>
             <p><strong>修改内容:</strong></p>
-            <p>{{ item.f_update_content }}</p>
+            <p>{{ item.f_update_content || '无' }}</p>
             <p><strong>文件变更:</strong></p>
-            <p class="file-changes">{{ item.f_file_changes }}</p>
+            <p class="file-changes">{{ item.f_file_changes || '无' }}</p>
             <p><strong>表变更:</strong></p>
-            <p class="table-changes">{{ item.f_table_changes }}</p>
+            <p class="table-changes">{{ item.f_table_changes || '无' }}</p>
           </el-card>
         </el-timeline-item>
       </el-timeline>
@@ -36,6 +36,17 @@ import { ref, onMounted } from 'vue'
 
 const versions = ref([])
 const currentVersion = ref('1.1.0')
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  if (typeof dateStr === 'string' && dateStr.includes('T')) {
+    return dateStr.split('T')[0]
+  }
+  if (dateStr instanceof Date) {
+    return dateStr.toISOString().split('T')[0]
+  }
+  return dateStr
+}
 
 const fetchVersions = async () => {
   try {
