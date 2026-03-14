@@ -13,23 +13,24 @@
         </template>
       </el-table-column>
       <el-table-column prop="f_create_time" label="创建时间" />
-      <el-table-column label="操作" width="150">
+      <el-table-column label="操作" width="180">
         <template #default="{ row }">
+          <el-button size="small" @click="handleEdit(row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" title="新增用户" width="500px">
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'" width="500px">
       <el-form :model="form" label-width="100px">
         <el-form-item label="用户ID">
-          <el-input v-model="form.userId" />
+          <el-input v-model="form.userId" :disabled="isEdit" />
         </el-form-item>
         <el-form-item label="用户名">
           <el-input v-model="form.userName" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="form.password" type="password" />
+          <el-input v-model="form.password" type="password" :placeholder="isEdit ? '留空则不修改密码' : ''" />
         </el-form-item>
         <el-form-item label="邮箱">
           <el-input v-model="form.email" />
@@ -56,6 +57,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const users = ref([])
 const dialogVisible = ref(false)
+const isEdit = ref(false)
 const form = ref({ userId: '', userName: '', password: '', email: '', role: 'user' })
 
 const fetchData = async () => {
@@ -70,33 +72,56 @@ const fetchData = async () => {
 
 const handleAdd = () => {
   form.value = { userId: '', userName: '', password: '', email: '', role: 'user' }
+  isEdit.value = false
+  dialogVisible.value = true
+}
+
+const handleEdit = (row) => {
+  form.value = { 
+    id: row.f_id,
+    userId: row.f_user_id, 
+    userName: row.f_user_name, 
+    password: '', 
+    email: row.f_email, 
+    role: row.f_role 
+  }
+  isEdit.value = true
   dialogVisible.value = true
 }
 
 const handleSubmit = async () => {
-  if (!form.value.userId || !form.value.userName || !form.value.password) {
+  if (!form.value.userId || !form.value.userName) {
     ElMessage.warning('请填写必填项')
     return
   }
   try {
-    const res = await fetch(API_URL + '/user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
-      body: JSON.stringify(form.value)
-    })
+    let res
+    if (isEdit.value) {
+      res = await fetch(API_URL + '/user/' + form.value.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
+        body: JSON.stringify(form.value)
+      })
+    } else {
+      res = await fetch(API_URL + '/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
+        body: JSON.stringify(form.value)
+      })
+    }
     const data = await res.json()
     if (data.code === 200) {
-      ElMessage.success('创建成功')
+      ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
       dialogVisible.value = false
       fetchData()
     }
-  } catch (e) { ElMessage.error('创建失败') }
+  } catch (e) { ElMessage.error('操作失败') }
 }
 
 const handleDelete = (row) => {
   ElMessageBox.confirm('确认删除此用户？', '警告', { type: 'warning' }).then(async () => {
     try {
-      const res = await fetch(`/api/pm/user/${row.f_id}`, {
+      const res = await fetch(API_URL + '/user/' + row.f_id, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
       })

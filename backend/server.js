@@ -119,6 +119,24 @@ app.post('/api/pm/user', authMiddleware, adminMiddleware, async (req, res) => {
   } catch (err) { res.json(response(500, err.message)); }
 });
 
+app.put('/api/pm/user/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { userName, password, email, role } = req.body;
+    if (password) {
+      await pool.query(
+        'UPDATE t_pm_user SET f_user_name=?, f_password=?, f_email=?, f_role=? WHERE f_id=?',
+        [userName, password, email, role, req.params.id]
+      );
+    } else {
+      await pool.query(
+        'UPDATE t_pm_user SET f_user_name=?, f_email=?, f_role=? WHERE f_id=?',
+        [userName, email, role, req.params.id]
+      );
+    }
+    res.json(response(200, '用户更新成功'));
+  } catch (err) { res.json(response(500, err.message)); }
+});
+
 app.delete('/api/pm/user/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     await pool.query('DELETE FROM t_pm_user WHERE f_id = ?', [req.params.id]);
