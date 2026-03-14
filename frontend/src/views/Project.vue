@@ -3,13 +3,50 @@
     <h2>项目管理</h2>
     <el-button type="primary" @click="handleAdd">新建项目</el-button>
     
-    <el-table :data="projects" border style="margin-top:20px">
-      <el-table-column prop="f_project_name" label="项目名称" />
-      <el-table-column prop="f_description" label="描述" />
-      <el-table-column prop="f_create_user" label="创建人" />
-      <el-table-column prop="f_create_time" label="创建时间" />
-      <el-table-column label="操作" width="300">
+    <el-table :data="projects" border style="margin-top:20px" @expand-change="handleExpand">
+      <el-table-column type="expand" width="50">
         <template #default="{ row }">
+          <div class="feature-expand">
+            <el-tabs>
+              <el-tab-pane label="软件功能">
+                <el-table :data="getFeatures(row.f_id, 'software')" size="small">
+                  <el-table-column prop="f_feature_name" label="功能名称" />
+                  <el-table-column prop="f_purpose" label="目的" show-overflow-tooltip />
+                  <el-table-column prop="f_owner_name" label="负责人" width="100" />
+                  <el-table-column prop="f_create_date" label="创建日期" width="120" />
+                  <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
+                  <el-table-column label="状态" width="80">
+                    <template #default="{ row }">
+                      <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+              <el-tab-pane label="硬件功能">
+                <el-table :data="getFeatures(row.f_id, 'hardware')" size="small">
+                  <el-table-column prop="f_feature_name" label="功能名称" />
+                  <el-table-column prop="f_purpose" label="目的" show-overflow-tooltip />
+                  <el-table-column prop="f_owner_name" label="负责人" width="100" />
+                  <el-table-column prop="f_create_date" label="创建日期" width="120" />
+                  <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
+                  <el-table-column label="状态" width="80">
+                    <template #default="{ row }">
+                      <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="f_project_name" label="项目名称" />
+      <el-table-column prop="f_description" label="描述" show-overflow-tooltip />
+      <el-table-column prop="f_create_user" label="创建人" width="100" />
+      <el-table-column prop="f_create_time" label="创建时间" width="180" />
+      <el-table-column label="操作" width="200">
+        <template #default="{ row }">
+          <el-button size="small" @click="handleEdit(row)">编辑</el-button>
           <el-button size="small" type="primary" @click="viewFeatures(row, 'software')">软件</el-button>
           <el-button size="small" type="success" @click="viewFeatures(row, 'hardware')">硬件</el-button>
           <el-button size="small" type="danger" v-if="isAdmin" @click="handleDelete(row)">删除</el-button>
@@ -17,13 +54,16 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" title="新建项目" width="500px">
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑项目' : '新建项目'" width="500px">
       <el-form :model="form" label-width="100px">
         <el-form-item label="项目名称">
           <el-input v-model="form.projectName" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="预计完成日期">
+          <el-date-picker v-model="form.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width:100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -42,8 +82,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const projects = ref([])
+const features = ref([])
 const dialogVisible = ref(false)
-const form = ref({ projectName: '', description: '' })
+const isEdit = ref(false)
+const form = ref({ projectName: '', description: '', targetDate: '' })
 
 const user = JSON.parse(localStorage.getItem('pm_user') || '{}')
 const isAdmin = computed(() => user.role === 'admin')
@@ -58,8 +100,43 @@ const fetchData = async () => {
   } catch (e) { console.error(e) }
 }
 
+const fetchAllFeatures = async () => {
+  try {
+    const res = await fetch(API_URL + '/feature', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) features.value = data.data
+  } catch (e) { console.error(e) }
+}
+
+const getFeatures = (projectId, branch) => {
+  return features.value.filter(f => f.f_project_id === projectId && f.f_branch === branch)
+}
+
+const getStatusType = (status) => {
+  const map = { pending: 'info', 进行中: 'warning', 完成: 'success', 延误: 'danger' }
+  return map[status] || 'info'
+}
+
+const handleExpand = (row) => {
+  fetchAllFeatures()
+}
+
 const handleAdd = () => {
-  form.value = { projectName: '', description: '' }
+  form.value = { projectName: '', description: '', targetDate: '' }
+  isEdit.value = false
+  dialogVisible.value = true
+}
+
+const handleEdit = (row) => {
+  form.value = { 
+    id: row.f_id,
+    projectName: row.f_project_name, 
+    description: row.f_description, 
+    targetDate: row.f_target_date || '' 
+  }
+  isEdit.value = true
   dialogVisible.value = true
 }
 
@@ -69,24 +146,33 @@ const handleSubmit = async () => {
     return
   }
   try {
-    const res = await fetch(API_URL + '/project', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
-      body: JSON.stringify({ ...form.value, createUser: user.userName || user.userId })
-    })
+    let res
+    if (isEdit.value) {
+      res = await fetch(API_URL + '/project/' + form.value.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
+        body: JSON.stringify(form.value)
+      })
+    } else {
+      res = await fetch(API_URL + '/project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
+        body: JSON.stringify({ ...form.value, createUser: user.userName || user.userId })
+      })
+    }
     const data = await res.json()
     if (data.code === 200) {
-      ElMessage.success('创建成功')
+      ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
       dialogVisible.value = false
       fetchData()
     }
-  } catch (e) { ElMessage.error('创建失败') }
+  } catch (e) { ElMessage.error('操作失败') }
 }
 
 const handleDelete = (row) => {
   ElMessageBox.confirm('确认删除此项目？', '警告', { type: 'warning' }).then(async () => {
     try {
-      const res = await fetch(`/api/pm/project/${row.f_id}`, {
+      const res = await fetch(API_URL + '/project/' + row.f_id, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
       })
@@ -103,9 +189,10 @@ const viewFeatures = (project, branch) => {
   router.push(`/feature/${project.f_id}/${branch}`)
 }
 
-onMounted(fetchData)
+onMounted(() => { fetchData(); fetchAllFeatures() })
 </script>
 
 <style scoped>
 .project-page h2 { margin-bottom: 20px; }
+.feature-expand { padding: 10px 20px; }
 </style>

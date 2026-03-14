@@ -163,6 +163,17 @@ app.post('/api/pm/project', authMiddleware, async (req, res) => {
   } catch (err) { res.json(response(500, err.message)); }
 });
 
+app.put('/api/pm/project/:id', authMiddleware, async (req, res) => {
+  try {
+    const { projectName, description, targetDate } = req.body;
+    await pool.query(
+      'UPDATE t_pm_project SET f_project_name=?, f_description=?, f_target_date=? WHERE f_id=?',
+      [projectName, description, targetDate, req.params.id]
+    );
+    res.json(response(200, '项目更新成功'));
+  } catch (err) { res.json(response(500, err.message)); }
+});
+
 app.delete('/api/pm/project/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     await pool.query('DELETE FROM t_pm_project WHERE f_id = ?', [req.params.id]);
@@ -184,11 +195,11 @@ app.get('/api/pm/feature', authMiddleware, async (req, res) => {
 
 app.post('/api/pm/feature', authMiddleware, upload.single('document'), async (req, res) => {
   try {
-    const { projectId, branch, featureName, purpose, ownerId, ownerName, createDate } = req.body;
+    const { projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate } = req.body;
     const documentPath = req.file ? '/uploads/' + req.file.filename : null;
     await pool.query(
-      'INSERT INTO t_pm_feature (f_project_id, f_branch, f_feature_name, f_purpose, f_owner_id, f_owner_name, f_create_date, f_document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [projectId, branch, featureName, purpose, ownerId, ownerName, createDate, documentPath]
+      'INSERT INTO t_pm_feature (f_project_id, f_branch, f_feature_name, f_purpose, f_owner_id, f_owner_name, f_create_date, f_target_date, f_document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate, documentPath]
     );
     res.json(response(200, '功能创建成功'));
   } catch (err) { res.json(response(500, err.message)); }
@@ -196,10 +207,10 @@ app.post('/api/pm/feature', authMiddleware, upload.single('document'), async (re
 
 app.put('/api/pm/feature/:id', authMiddleware, async (req, res) => {
   try {
-    const { featureName, purpose, ownerId, ownerName, createDate, status, summary, completeDate } = req.body;
+    const { featureName, purpose, ownerId, ownerName, createDate, targetDate, status, summary, completeDate } = req.body;
     await pool.query(
-      'UPDATE t_pm_feature SET f_feature_name=?, f_purpose=?, f_owner_id=?, f_owner_name=?, f_create_date=?, f_status=?, f_summary=?, f_complete_date=? WHERE f_id=?',
-      [featureName, purpose, ownerId, ownerName, createDate, status, summary, completeDate, req.params.id]
+      'UPDATE t_pm_feature SET f_feature_name=?, f_purpose=?, f_owner_id=?, f_owner_name=?, f_create_date=?, f_target_date=?, f_status=?, f_summary=?, f_complete_date=? WHERE f_id=?',
+      [featureName, purpose, ownerId, ownerName, createDate, targetDate, status, summary, completeDate, req.params.id]
     );
     res.json(response(200, '更新成功'));
   } catch (err) { res.json(response(500, err.message)); }

@@ -42,6 +42,9 @@
         <el-form-item label="创建日期">
           <el-date-picker v-model="featureForm.createDate" type="date" value-format="YYYY-MM-DD" />
         </el-form-item>
+        <el-form-item label="预计完成日期">
+          <el-date-picker v-model="featureForm.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择预计完成日期" />
+        </el-form-item>
         <el-form-item label="规划文档">
           <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess">
             <el-button>上传文件</el-button>
@@ -156,7 +159,7 @@ const isTaskEdit = ref(false)
 const uploadUrl = '/api/pm/feature'
 const uploadHeaders = { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
 
-const featureForm = ref({ featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', documentPath: '' })
+const featureForm = ref({ featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', documentPath: '' })
 const taskForm = ref({ taskContent: '', targetDate: '', ownerId: null, ownerName: '', supplierId: null, status: '未开展', progress: 0, documentPath: '' })
 const summaryForm = ref({ summary: '' })
 
@@ -216,13 +219,13 @@ const getTaskStatusType = (status) => {
 }
 
 const handleAddFeature = () => {
-  featureForm.value = { featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: new Date().toISOString().split('T')[0], documentPath: '' }
+  featureForm.value = { featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: new Date().toISOString().split('T')[0], targetDate: '', documentPath: '' }
   isFeatureEdit.value = false
   featureDialogVisible.value = true
 }
 
 const editFeature = (row) => {
-  featureForm.value = { ...row, featureName: row.f_feature_name, purpose: row.f_purpose, ownerId: row.f_owner_id, ownerName: row.f_owner_name, createDate: row.f_create_date }
+  featureForm.value = { ...row, featureName: row.f_feature_name, purpose: row.f_purpose, ownerId: row.f_owner_id, ownerName: row.f_owner_name, createDate: row.f_create_date, targetDate: row.f_target_date || '' }
   isFeatureEdit.value = true
   featureDialogVisible.value = true
 }
@@ -248,6 +251,7 @@ const submitFeature = async () => {
     formData.append('ownerId', featureForm.value.ownerId || '')
     formData.append('ownerName', featureForm.value.ownerName || '')
     formData.append('createDate', featureForm.value.createDate)
+    formData.append('targetDate', featureForm.value.targetDate || '')
     
     const res = await fetch(API_URL + '/feature', {
       method: 'POST',
