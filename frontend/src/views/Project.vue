@@ -118,18 +118,36 @@
         <el-form-item label="预计完成日期">
           <el-date-picker v-model="featureForm.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择预计完成日期" />
         </el-form-item>
+        <el-form-item label="供应商">
+          <el-select v-model="featureForm.supplierId" placeholder="选择供应商">
+            <el-option v-for="s in suppliers" :key="s.f_id" :label="s.f_supplier_name" :value="s.f_id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="featureForm.status">
+          <el-select v-model="featureForm.status" @change="onStatusChange">
             <el-option label="待处理" value="pending" />
             <el-option label="进行中" value="进行中" />
-            <el-option label="完成" value="完成" />
+            <el-option label="完成" value="完成" :disabled="!featureForm.summary && featureForm.status !== '完成'" />
             <el-option label="延误" value="延误" />
           </el-select>
         </el-form-item>
+        <el-form-item label="总结" v-if="isFeatureEdit">
+          <el-input v-model="featureForm.summary" type="textarea" :rows="3" placeholder="填写总结后才能标记为完成" />
+        </el-form-item>
         <el-form-item label="规划文档">
-          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess">
+          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess" :show-file-list="false">
             <el-button>上传文件</el-button>
           </el-upload>
+        </el-form-item>
+        <el-form-item label="已上传文件" v-if="uploadedFiles.length > 0">
+          <el-table :data="uploadedFiles" size="small" border>
+            <el-table-column prop="fileName" label="文件名" />
+            <el-table-column label="操作" width="80">
+              <template #default="{ $index }">
+                <el-button size="small" type="danger" @click="removeFile($index)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -198,7 +216,9 @@ const taskDialogVisible = ref(false)
 const isEdit = ref(false)
 const isTaskEdit = ref(false)
 const form = ref({ projectName: '', description: '', targetDate: '' })
-const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', status: 'pending', documentPath: '' })
+const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', supplierId: null, status: 'pending', summary: '', documentPath: '' })
+const uploadedFiles = ref([])
+const isFeatureEdit = ref(false)
 const taskForm = ref({ id: null, featureId: null, taskContent: '', targetDate: '', ownerId: null, ownerName: '', supplierId: null, status: '未开展', progress: 0 })
 
 const user = JSON.parse(localStorage.getItem('pm_user') || '{}')
@@ -352,6 +372,8 @@ const goToFeature = (project, branch) => {
 
 // Feature edit functions
 const editFeature = (row) => {
+  const docPath = row.f_document_path || ''
+  uploadedFiles.value = docPath ? docPath.split(',').filter(p => p).map(p => ({ fileName: p.split('/').pop(), path: p })) : []
   featureForm.value = { 
     id: row.f_id,
     featureName: row.f_feature_name, 
@@ -360,9 +382,12 @@ const editFeature = (row) => {
     ownerName: row.f_owner_name, 
     createDate: row.f_create_date, 
     targetDate: row.f_target_date || '',
+    supplierId: row.f_supplier_id || null,
     status: row.f_status || 'pending',
-    documentPath: row.f_document_path || ''
+    summary: row.f_summary || '',
+    documentPath: docPath
   }
+  isFeatureEdit.value = true
   featureDialogVisible.value = true
 }
 
@@ -371,9 +396,25 @@ const onOwnerChange = (val) => {
   if (u) featureForm.value.ownerName = u.f_user_name
 }
 
+const onStatusChange = (val) => {
+  if (val === '完成' && !featureForm.value.summary) {
+    ElMessage.warning('请先填写总结才能标记为完成')
+    featureForm.value.status = '进行中'
+  }
+}
+
 const onUploadSuccess = (res) => {
-  if (res.code === 200) featureForm.value.documentPath = res.data
-  ElMessage.success('上传成功')
+  if (res.code === 200) {
+    const fileName = res.data.split('/').pop()
+    uploadedFiles.value.push({ fileName: fileName, path: res.data })
+    featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
+    ElMessage.success('上传成功')
+  }
+}
+
+const removeFile = (index) => {
+  uploadedFiles.value.splice(index, 1)
+  featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
 }
 
 const submitFeature = async () => {
