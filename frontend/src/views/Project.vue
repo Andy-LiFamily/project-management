@@ -20,6 +20,11 @@
                       <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
                     </template>
                   </el-table-column>
+                  <el-table-column label="操作" width="80">
+                    <template #default="{ row }">
+                      <el-button size="small" @click="editFeature(row)">编辑</el-button>
+                    </template>
+                  </el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="硬件功能">
@@ -34,6 +39,11 @@
                       <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
                     </template>
                   </el-table-column>
+                  <el-table-column label="操作" width="80">
+                    <template #default="{ row }">
+                      <el-button size="small" @click="editFeature(row)">编辑</el-button>
+                    </template>
+                  </el-table-column>
                 </el-table>
               </el-tab-pane>
             </el-tabs>
@@ -42,6 +52,7 @@
       </el-table-column>
       <el-table-column prop="f_project_name" label="项目名称" />
       <el-table-column prop="f_description" label="描述" show-overflow-tooltip />
+      <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
       <el-table-column prop="f_create_user" label="创建人" width="100" />
       <el-table-column prop="f_create_time" label="创建时间" width="180" />
       <el-table-column label="操作" width="200">
@@ -54,6 +65,7 @@
       </el-table-column>
     </el-table>
 
+    <!-- 项目编辑弹窗 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑项目' : '新建项目'" width="500px">
       <el-form :model="form" label-width="100px">
         <el-form-item label="项目名称">
@@ -71,6 +83,41 @@
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 功能编辑弹窗 -->
+    <el-dialog v-model="featureDialogVisible" title="编辑功能" width="600px">
+      <el-form :model="featureForm" label-width="100px">
+        <el-form-item label="功能名称">
+          <el-input v-model="featureForm.featureName" />
+        </el-form-item>
+        <el-form-item label="目的">
+          <el-input v-model="featureForm.purpose" type="textarea" />
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="featureForm.ownerId" @change="onOwnerChange">
+            <el-option v-for="u in users" :key="u.f_id" :label="u.f_user_name" :value="u.f_id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="创建日期">
+          <el-date-picker v-model="featureForm.createDate" type="date" value-format="YYYY-MM-DD" />
+        </el-form-item>
+        <el-form-item label="预计完成日期">
+          <el-date-picker v-model="featureForm.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择预计完成日期" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="featureForm.status">
+            <el-option label="待处理" value="pending" />
+            <el-option label="进行中" value="进行中" />
+            <el-option label="完成" value="完成" />
+            <el-option label="延误" value="延误" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="featureDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitFeature">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -83,9 +130,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const router = useRouter()
 const projects = ref([])
 const features = ref([])
+const users = ref([])
 const dialogVisible = ref(false)
+const featureDialogVisible = ref(false)
 const isEdit = ref(false)
 const form = ref({ projectName: '', description: '', targetDate: '' })
+const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', status: 'pending' })
 
 const user = JSON.parse(localStorage.getItem('pm_user') || '{}')
 const isAdmin = computed(() => user.role === 'admin')
@@ -110,6 +160,16 @@ const fetchAllFeatures = async () => {
   } catch (e) { console.error(e) }
 }
 
+const fetchUsers = async () => {
+  try {
+    const res = await fetch(API_URL + '/users', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) users.value = data.data
+  } catch (e) { console.error(e) }
+}
+
 const getFeatures = (projectId, branch) => {
   return features.value.filter(f => f.f_project_id === projectId && f.f_branch === branch)
 }
@@ -119,7 +179,7 @@ const getStatusType = (status) => {
   return map[status] || 'info'
 }
 
-const handleExpand = (row) => {
+const handleExpand = () => {
   fetchAllFeatures()
 }
 
@@ -189,7 +249,47 @@ const viewFeatures = (project, branch) => {
   router.push(`/feature/${project.f_id}/${branch}`)
 }
 
-onMounted(() => { fetchData(); fetchAllFeatures() })
+// Feature edit functions
+const editFeature = (row) => {
+  featureForm.value = { 
+    id: row.f_id,
+    featureName: row.f_feature_name, 
+    purpose: row.f_purpose, 
+    ownerId: row.f_owner_id, 
+    ownerName: row.f_owner_name, 
+    createDate: row.f_create_date, 
+    targetDate: row.f_target_date || '',
+    status: row.f_status || 'pending'
+  }
+  featureDialogVisible.value = true
+}
+
+const onOwnerChange = (val) => {
+  const u = users.value.find(u => u.f_id === val)
+  if (u) featureForm.value.ownerName = u.f_user_name
+}
+
+const submitFeature = async () => {
+  if (!featureForm.value.featureName) {
+    ElMessage.warning('请输入功能名称')
+    return
+  }
+  try {
+    const res = await fetch(API_URL + '/feature/' + featureForm.value.id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
+      body: JSON.stringify(featureForm.value)
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('更新成功')
+      featureDialogVisible.value = false
+      fetchAllFeatures()
+    }
+  } catch (e) { ElMessage.error('更新失败') }
+}
+
+onMounted(() => { fetchData(); fetchAllFeatures(); fetchUsers() })
 </script>
 
 <style scoped>
