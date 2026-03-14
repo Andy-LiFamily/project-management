@@ -1,4 +1,3 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 <template>
   <div class="feature-page">
     <div class="header">
@@ -134,7 +133,6 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 </template>
 
 <script setup>
-const API_URL = import.meta.env.VITE_API_URL || "/api/pm";
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -178,7 +176,7 @@ const fetchFeatures = async () => {
 
 const fetchUsers = async () => {
   try {
-    const res = await fetch('/api/pm/users', {
+    const res = await fetch(API_URL + '/users', {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
     })
     const data = await res.json()
@@ -188,7 +186,7 @@ const fetchUsers = async () => {
 
 const fetchSuppliers = async () => {
   try {
-    const res = await fetch('/api/pm/supplier', {
+    const res = await fetch(API_URL + '/supplier', {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
     })
     const data = await res.json()
@@ -250,7 +248,7 @@ const submitFeature = async () => {
     formData.append('ownerName', featureForm.value.ownerName || '')
     formData.append('createDate', featureForm.value.createDate)
     
-    const res = await fetch('/api/pm/feature', {
+    const res = await fetch(API_URL + '/feature', {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
       body: formData
@@ -321,7 +319,7 @@ const submitTask = async () => {
     formData.append('status', taskForm.value.status)
     formData.append('progress', taskForm.value.progress)
     
-    const res = await fetch('/api/pm/task', {
+    const res = await fetch(API_URL + '/task', {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
       body: formData

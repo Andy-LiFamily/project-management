@@ -1,4 +1,3 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 <template>
   <div class="supplier-page">
     <h2>供应商管理</h2>
@@ -40,7 +39,6 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 </template>
 
 <script setup>
-const API_URL = import.meta.env.VITE_API_URL || "/api/pm";
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -50,7 +48,7 @@ const form = ref({ supplierName: '', contactPerson: '', contactPhone: '', projec
 
 const fetchData = async () => {
   try {
-    const res = await fetch('/api/pm/supplier', {
+    const res = await fetch(API_URL + '/supplier', {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
     })
     const data = await res.json()
@@ -66,7 +64,7 @@ const handleAdd = () => {
 const handleSubmit = async () => {
   if (!form.value.supplierName) { ElMessage.warning('请输入供应商名称'); return }
   try {
-    const res = await fetch('/api/pm/supplier', {
+    const res = await fetch(API_URL + '/supplier', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
       body: JSON.stringify(form.value)

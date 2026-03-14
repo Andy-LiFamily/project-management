@@ -1,4 +1,3 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 <template>
   <div class="project-page">
     <h2>项目管理</h2>
@@ -36,7 +35,6 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 </template>
 
 <script setup>
-const API_URL = import.meta.env.VITE_API_URL || "/api/pm";
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -51,7 +49,7 @@ const isAdmin = computed(() => user.role === 'admin')
 
 const fetchData = async () => {
   try {
-    const res = await fetch('/api/pm/project', {
+    const res = await fetch(API_URL + '/project', {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
     })
     const data = await res.json()
@@ -70,7 +68,7 @@ const handleSubmit = async () => {
     return
   }
   try {
-    const res = await fetch('/api/pm/project', {
+    const res = await fetch(API_URL + '/project', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
       body: JSON.stringify({ ...form.value, createUser: user.userName || user.userId })

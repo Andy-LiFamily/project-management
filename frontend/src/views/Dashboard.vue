@@ -1,4 +1,3 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 <template>
   <div class="dashboard">
     <h2>项目进度总览</h2>
@@ -52,7 +51,6 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 </template>
 
 <script setup>
-const API_URL = import.meta.env.VITE_API_URL || "/api/pm";
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -66,7 +64,7 @@ const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', 
 
 const fetchData = async () => {
   try {
-    const res = await fetch('/api/pm/dashboard', {
+    const res = await fetch(API_URL + '/dashboard', {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
     })
     const data = await res.json()

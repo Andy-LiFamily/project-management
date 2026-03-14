@@ -1,4 +1,3 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 <template>
   <div class="user-page">
     <h2>用户管理</h2>
@@ -51,7 +50,6 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 </template>
 
 <script setup>
-const API_URL = import.meta.env.VITE_API_URL || "/api/pm";
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -61,7 +59,7 @@ const form = ref({ userId: '', userName: '', password: '', email: '', role: 'use
 
 const fetchData = async () => {
   try {
-    const res = await fetch('/api/pm/user', {
+    const res = await fetch(API_URL + '/user', {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
     })
     const data = await res.json()
@@ -80,7 +78,7 @@ const handleSubmit = async () => {
     return
   }
   try {
-    const res = await fetch('/api/pm/user', {
+    const res = await fetch(API_URL + '/user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
       body: JSON.stringify(form.value)
