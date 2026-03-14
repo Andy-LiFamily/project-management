@@ -24,15 +24,16 @@
                   <el-table-column label="分工数" width="80">
                     <template #default="{ row }">{{ getTaskCount(row.f_id) }}</template>
                   </el-table-column>
-                  <el-table-column label="操作" width="150">
+                  <el-table-column label="操作" width="200">
                     <template #default="{ row }">
                       <el-button size="small" @click="editFeature(row)">编辑</el-button>
-                      <el-button size="small" type="primary" @click="addTask(row)">分工</el-button>
+                      <el-button size="small" @click="viewTasks(row)">分工</el-button>
+                      <el-button size="small" type="primary" @click="addTask(row)">新增分工</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="硬件功能">
+            </el-tabs>
                 <el-button size="small" type="primary" @click="goToFeature(row, 'hardware')" style="margin-bottom:10px">新增功能</el-button>
                 <el-table :data="getFeatures(row.f_id, 'hardware')" size="small">
                   <el-table-column prop="f_feature_name" label="功能名称" width="150" />
@@ -156,6 +157,27 @@
       </template>
     </el-dialog>
 
+    <!-- 分工列表弹窗 -->
+    <el-dialog v-model="taskListVisible" title="工作分工列表" width="900px">
+      <el-table :data="featureTasks" border>
+        <el-table-column prop="f_task_content" label="工作内容" />
+        <el-table-column prop="f_target_date" label="预计完工日期" width="120" />
+        <el-table-column prop="f_owner_name" label="负责人" width="100" />
+        <el-table-column prop="f_progress" label="进度%" width="80" />
+        <el-table-column prop="f_supplier_name" label="供应商" width="120" />
+        <el-table-column prop="f_status" label="状态" width="80">
+          <template #default="{ row }">
+            <el-tag :type="getTaskStatusType(row.f_status)">{{ row.f_status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button size="small" @click="editTask(row)">编辑</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
     <!-- 分工弹窗 -->
     <el-dialog v-model="taskDialogVisible" :title="isTaskEdit ? '编辑分工' : '新增分工'" width="600px">
       <el-form :model="taskForm" label-width="100px">
@@ -213,6 +235,8 @@ const suppliers = ref([])
 const dialogVisible = ref(false)
 const featureDialogVisible = ref(false)
 const taskDialogVisible = ref(false)
+const taskListVisible = ref(false)
+const featureTasks = ref([])
 const isEdit = ref(false)
 const isTaskEdit = ref(false)
 const form = ref({ projectName: '', description: '', targetDate: '' })
@@ -447,6 +471,41 @@ const submitFeature = async () => {
 }
 
 // Task functions
+const viewTasks = async (row) => {
+  try {
+    const res = await fetch(API_URL + '/task?featureId=' + row.f_id, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      featureTasks.value = data.data
+      taskListVisible.value = true
+    }
+  } catch (e) { console.error(e) }
+}
+
+const editTask = (row) => {
+  taskForm.value = {
+    id: row.f_id,
+    featureId: row.f_feature_id,
+    taskContent: row.f_task_content,
+    targetDate: row.f_target_date,
+    ownerId: row.f_owner_id,
+    ownerName: row.f_owner_name,
+    supplierId: row.f_supplier_id,
+    status: row.f_status,
+    progress: row.f_progress
+  }
+  isTaskEdit.value = true
+  taskListVisible.value = false
+  taskDialogVisible.value = true
+}
+
+const getTaskStatusType = (status) => {
+  const map = { '未开展': 'info', '进行中': 'warning', '完成': 'success', '延误': 'danger' }
+  return map[status] || 'info'
+}
+
 const addTask = (row) => {
   taskForm.value = { 
     id: null,
