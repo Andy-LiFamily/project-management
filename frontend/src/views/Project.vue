@@ -9,39 +9,49 @@
           <div class="feature-expand">
             <el-tabs>
               <el-tab-pane label="软件功能">
+                <el-button size="small" type="primary" @click="goToFeature(row, 'software')" style="margin-bottom:10px">新增功能</el-button>
                 <el-table :data="getFeatures(row.f_id, 'software')" size="small">
-                  <el-table-column prop="f_feature_name" label="功能名称" />
+                  <el-table-column prop="f_feature_name" label="功能名称" width="150" />
                   <el-table-column prop="f_purpose" label="目的" show-overflow-tooltip />
                   <el-table-column prop="f_owner_name" label="负责人" width="100" />
-                  <el-table-column prop="f_create_date" label="创建日期" width="120" />
+                  <el-table-column prop="f_create_date" label="创建日期" width="100" />
                   <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
                   <el-table-column label="状态" width="80">
                     <template #default="{ row }">
                       <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="80">
+                  <el-table-column label="分工数" width="80">
+                    <template #default="{ row }">{{ getTaskCount(row.f_id) }}</template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="150">
                     <template #default="{ row }">
                       <el-button size="small" @click="editFeature(row)">编辑</el-button>
+                      <el-button size="small" type="primary" @click="addTask(row)">分工</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="硬件功能">
+                <el-button size="small" type="primary" @click="goToFeature(row, 'hardware')" style="margin-bottom:10px">新增功能</el-button>
                 <el-table :data="getFeatures(row.f_id, 'hardware')" size="small">
-                  <el-table-column prop="f_feature_name" label="功能名称" />
+                  <el-table-column prop="f_feature_name" label="功能名称" width="150" />
                   <el-table-column prop="f_purpose" label="目的" show-overflow-tooltip />
                   <el-table-column prop="f_owner_name" label="负责人" width="100" />
-                  <el-table-column prop="f_create_date" label="创建日期" width="120" />
+                  <el-table-column prop="f_create_date" label="创建日期" width="100" />
                   <el-table-column prop="f_target_date" label="预计完成日期" width="120" />
                   <el-table-column label="状态" width="80">
                     <template #default="{ row }">
                       <el-tag :type="getStatusType(row.f_status)">{{ row.f_status }}</el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="80">
+                  <el-table-column label="分工数" width="80">
+                    <template #default="{ row }">{{ getTaskCount(row.f_id) }}</template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="150">
                     <template #default="{ row }">
                       <el-button size="small" @click="editFeature(row)">编辑</el-button>
+                      <el-button size="small" type="primary" @click="addTask(row)">分工</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -123,6 +133,43 @@
         <el-button type="primary" @click="submitFeature">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 分工弹窗 -->
+    <el-dialog v-model="taskDialogVisible" :title="isTaskEdit ? '编辑分工' : '新增分工'" width="600px">
+      <el-form :model="taskForm" label-width="100px">
+        <el-form-item label="工作内容">
+          <el-input v-model="taskForm.taskContent" type="textarea" />
+        </el-form-item>
+        <el-form-item label="预计完工日期">
+          <el-date-picker v-model="taskForm.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择预计完工日期" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="taskForm.ownerId" @change="onTaskOwnerChange">
+            <el-option v-for="u in users" :key="u.f_id" :label="u.f_user_name" :value="u.f_id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="供应商">
+          <el-select v-model="taskForm.supplierId">
+            <el-option v-for="s in suppliers" :key="s.f_id" :label="s.f_supplier_name" :value="s.f_id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="taskForm.status">
+            <el-option label="未开展" value="未开展" />
+            <el-option label="进行中" value="进行中" />
+            <el-option label="延误" value="延误" />
+            <el-option label="完成" value="完成" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="进度%">
+          <el-input-number v-model="taskForm.progress" :min="0" :max="100" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="taskDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitTask">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -138,12 +185,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const router = useRouter()
 const projects = ref([])
 const features = ref([])
+const tasks = ref([])
 const users = ref([])
+const suppliers = ref([])
 const dialogVisible = ref(false)
 const featureDialogVisible = ref(false)
+const taskDialogVisible = ref(false)
 const isEdit = ref(false)
+const isTaskEdit = ref(false)
 const form = ref({ projectName: '', description: '', targetDate: '' })
 const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', status: 'pending', documentPath: '' })
+const taskForm = ref({ id: null, featureId: null, taskContent: '', targetDate: '', ownerId: null, ownerName: '', supplierId: null, status: '未开展', progress: 0 })
 
 const user = JSON.parse(localStorage.getItem('pm_user') || '{}')
 const isAdmin = computed(() => user.role === 'admin')
@@ -168,6 +220,16 @@ const fetchAllFeatures = async () => {
   } catch (e) { console.error(e) }
 }
 
+const fetchAllTasks = async () => {
+  try {
+    const res = await fetch(API_URL + '/task', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) tasks.value = data.data
+  } catch (e) { console.error(e) }
+}
+
 const fetchUsers = async () => {
   try {
     const res = await fetch(API_URL + '/users', {
@@ -178,8 +240,22 @@ const fetchUsers = async () => {
   } catch (e) { console.error(e) }
 }
 
+const fetchSuppliers = async () => {
+  try {
+    const res = await fetch(API_URL + '/supplier', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) suppliers.value = data.data
+  } catch (e) { console.error(e) }
+}
+
 const getFeatures = (projectId, branch) => {
   return features.value.filter(f => f.f_project_id === projectId && f.f_branch === branch)
+}
+
+const getTaskCount = (featureId) => {
+  return tasks.value.filter(t => t.f_feature_id === featureId).length
 }
 
 const getStatusType = (status) => {
@@ -189,6 +265,7 @@ const getStatusType = (status) => {
 
 const handleExpand = () => {
   fetchAllFeatures()
+  fetchAllTasks()
 }
 
 const handleAdd = () => {
@@ -257,6 +334,10 @@ const viewFeatures = (project, branch) => {
   router.push(`/feature/${project.f_id}/${branch}`)
 }
 
+const goToFeature = (project, branch) => {
+  router.push(`/feature/${project.f_id}/${branch}`)
+}
+
 // Feature edit functions
 const editFeature = (row) => {
   featureForm.value = { 
@@ -267,7 +348,8 @@ const editFeature = (row) => {
     ownerName: row.f_owner_name, 
     createDate: row.f_create_date, 
     targetDate: row.f_target_date || '',
-    status: row.f_status || 'pending'
+    status: row.f_status || 'pending',
+    documentPath: row.f_document_path || ''
   }
   featureDialogVisible.value = true
 }
@@ -302,7 +384,49 @@ const submitFeature = async () => {
   } catch (e) { ElMessage.error('更新失败') }
 }
 
-onMounted(() => { fetchData(); fetchAllFeatures(); fetchUsers() })
+// Task functions
+const addTask = (row) => {
+  taskForm.value = { 
+    id: null,
+    featureId: row.f_id,
+    taskContent: '', 
+    targetDate: '', 
+    ownerId: null, 
+    ownerName: '', 
+    supplierId: null, 
+    status: '未开展', 
+    progress: 0 
+  }
+  isTaskEdit.value = false
+  taskDialogVisible.value = true
+}
+
+const onTaskOwnerChange = (val) => {
+  const u = users.value.find(u => u.f_id === val)
+  if (u) taskForm.value.ownerName = u.f_user_name
+}
+
+const submitTask = async () => {
+  if (!taskForm.value.taskContent) {
+    ElMessage.warning('请输入工作内容')
+    return
+  }
+  try {
+    const res = await fetch(API_URL + '/task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
+      body: JSON.stringify(taskForm.value)
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success(isTaskEdit.value ? '更新成功' : '创建成功')
+      taskDialogVisible.value = false
+      fetchAllTasks()
+    }
+  } catch (e) { ElMessage.error('操作失败') }
+}
+
+onMounted(() => { fetchData(); fetchAllFeatures(); fetchAllTasks(); fetchUsers(); fetchSuppliers() })
 </script>
 
 <style scoped>
