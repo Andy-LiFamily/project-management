@@ -312,3 +312,11 @@ app.get('/api/pm/users', authMiddleware, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`PM System API running on port ${PORT}`);
 });
+
+// ============ Version APIs ============
+app.get('/api/pm/version', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM t_pm_version ORDER BY f_id DESC');
+    res.json(response(200, 'success', rows));
+  } catch (err) { res.json(response(500, err.message)); }
+});

@@ -19,6 +19,10 @@
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
+        <el-menu-item index="/version">
+          <el-icon><Document /></el-icon>
+          <span>版本信息</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -31,6 +35,11 @@
       <el-main>
         <router-view />
       </el-main>
+      <el-footer height="40px">
+        <div class="footer">
+          <span>项目管理系统 v{{ currentVersion }}</span>
+        </div>
+      </el-footer>
     </el-container>
   </el-container>
 </template>
@@ -43,6 +52,7 @@ const router = useRouter()
 const route = useRoute()
 const userName = ref('')
 const role = ref('')
+const currentVersion = ref('1.1.0')
 
 const activeMenu = computed(() => route.path)
 const isAdmin = computed(() => role.value === 'admin')
@@ -112,5 +122,17 @@ const handleLogout = () => {
 .el-main {
   background: #f0f2f5;
   padding: 20px;
+}
+
+.el-footer {
+  background: #fff;
+  text-align: center;
+  line-height: 40px;
+  border-top: 1px solid #ebeef5;
+}
+
+.footer {
+  color: #909399;
+  font-size: 14px;
 }
 </style>
