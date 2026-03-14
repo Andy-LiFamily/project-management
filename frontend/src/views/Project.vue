@@ -112,6 +112,11 @@
             <el-option label="延误" value="延误" />
           </el-select>
         </el-form-item>
+        <el-form-item label="规划文档">
+          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess">
+            <el-button>上传文件</el-button>
+          </el-upload>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="featureDialogVisible = false">取消</el-button>
@@ -123,6 +128,9 @@
 
 <script setup>
 const API_URL = import.meta.env.PROD ? 'https://pm-backend.zeabur.app' + '/api/pm' : import.meta.env.VITE_API_URL || '/api/pm';
+const uploadUrl = API_URL + '/feature'
+const uploadHeaders = { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -135,7 +143,7 @@ const dialogVisible = ref(false)
 const featureDialogVisible = ref(false)
 const isEdit = ref(false)
 const form = ref({ projectName: '', description: '', targetDate: '' })
-const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', status: 'pending' })
+const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', status: 'pending', documentPath: '' })
 
 const user = JSON.parse(localStorage.getItem('pm_user') || '{}')
 const isAdmin = computed(() => user.role === 'admin')
@@ -267,6 +275,11 @@ const editFeature = (row) => {
 const onOwnerChange = (val) => {
   const u = users.value.find(u => u.f_id === val)
   if (u) featureForm.value.ownerName = u.f_user_name
+}
+
+const onUploadSuccess = (res) => {
+  if (res.code === 200) featureForm.value.documentPath = res.data
+  ElMessage.success('上传成功')
 }
 
 const submitFeature = async () => {
