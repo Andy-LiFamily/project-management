@@ -58,6 +58,16 @@ const transporter = nodemailer.createTransport({
 // Response helper
 const response = (code, message, data = null) => ({ code, message, data });
 
+// Helper to format date
+const formatDate = (dateVal) => {
+  if (!dateVal) return null;
+  if (typeof dateVal === 'string') {
+    // Handle ISO format like '2026-03-14T00:00:00.000Z'
+    return dateVal.split('T')[0];
+  }
+  return dateVal;
+};
+
 // Auth Middleware
 const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -168,7 +178,7 @@ app.put('/api/pm/project/:id', authMiddleware, async (req, res) => {
     const { projectName, description, targetDate } = req.body;
     await pool.query(
       'UPDATE t_pm_project SET f_project_name=?, f_description=?, f_target_date=? WHERE f_id=?',
-      [projectName, description, targetDate, req.params.id]
+      [projectName, description, formatDate(targetDate), req.params.id]
     );
     res.json(response(200, '项目更新成功'));
   } catch (err) { res.json(response(500, err.message)); }
@@ -199,7 +209,7 @@ app.post('/api/pm/feature', authMiddleware, upload.single('document'), async (re
     const documentPath = req.file ? '/uploads/' + req.file.filename : null;
     await pool.query(
       'INSERT INTO t_pm_feature (f_project_id, f_branch, f_feature_name, f_purpose, f_owner_id, f_owner_name, f_create_date, f_target_date, f_document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate, documentPath]
+      [projectId, branch, featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), documentPath]
     );
     res.json(response(200, '功能创建成功'));
   } catch (err) { res.json(response(500, err.message)); }
@@ -210,7 +220,7 @@ app.put('/api/pm/feature/:id', authMiddleware, async (req, res) => {
     const { featureName, purpose, ownerId, ownerName, createDate, targetDate, status, summary, completeDate } = req.body;
     await pool.query(
       'UPDATE t_pm_feature SET f_feature_name=?, f_purpose=?, f_owner_id=?, f_owner_name=?, f_create_date=?, f_target_date=?, f_status=?, f_summary=?, f_complete_date=? WHERE f_id=?',
-      [featureName, purpose, ownerId, ownerName, createDate, targetDate, status, summary, completeDate, req.params.id]
+      [featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), status, summary, formatDate(completeDate), req.params.id]
     );
     res.json(response(200, '更新成功'));
   } catch (err) { res.json(response(500, err.message)); }
@@ -241,7 +251,7 @@ app.post('/api/pm/task', authMiddleware, upload.single('document'), async (req, 
     const documentPath = req.file ? '/uploads/' + req.file.filename : null;
     await pool.query(
       'INSERT INTO t_pm_task (f_feature_id, f_task_content, f_target_date, f_owner_id, f_owner_name, f_supplier_id, f_status, f_document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [featureId, taskContent, targetDate, ownerId, ownerName, supplierId, status || '未开展', documentPath]
+      [featureId, taskContent, formatDate(targetDate), ownerId, ownerName, supplierId, status || '未开展', documentPath]
     );
     res.json(response(200, '分工创建成功'));
   } catch (err) { res.json(response(500, err.message)); }
@@ -252,7 +262,7 @@ app.put('/api/pm/task/:id', authMiddleware, async (req, res) => {
     const { taskContent, targetDate, ownerId, ownerName, supplierId, status, progress } = req.body;
     await pool.query(
       'UPDATE t_pm_task SET f_task_content=?, f_target_date=?, f_owner_id=?, f_owner_name=?, f_supplier_id=?, f_status=?, f_progress=? WHERE f_id=?',
-      [taskContent, targetDate, ownerId, ownerName, supplierId, status, progress, req.params.id]
+      [taskContent, formatDate(targetDate), ownerId, ownerName, supplierId, status, progress, req.params.id]
     );
     res.json(response(200, '更新成功'));
   } catch (err) { res.json(response(500, err.message)); }
