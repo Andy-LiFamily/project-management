@@ -51,6 +51,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 </template>
 
 <script setup>
+const API_URL = import.meta.env.VITE_API_URL || "/api/pm";
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
