@@ -26,6 +26,8 @@ const router = useRouter()
 const form = reactive({ userId: '', password: '' })
 const loading = ref(false)
 
+const API_URL = import.meta.env.VITE_API_URL || '/api/pm'
+
 const handleLogin = async () => {
   if (!form.userId || !form.password) {
     ElMessage.warning('请输入用户名和密码')
@@ -33,7 +35,7 @@ const handleLogin = async () => {
   }
   loading.value = true
   try {
-    const res = await fetch('/api/pm/auth/login', {
+    const res = await fetch(API_URL + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)

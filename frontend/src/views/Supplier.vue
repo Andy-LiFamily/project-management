@@ -1,3 +1,4 @@
+const API_URL = import.meta.env.VITE_API_URL || '/api/pm';
 <template>
   <div class="supplier-page">
     <h2>供应商管理</h2>
