@@ -286,7 +286,11 @@ app.put('/api/pm/task/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/pm/task/:id', authMiddleware, async (req, res) => {
   try {
-    await pool.query('DELETE FROM t_pm_task WHERE f_id = ?', [req.params.id]);
+    const taskId = req.params.id;
+    if (!taskId || taskId === 'undefined' || isNaN(taskId)) {
+      return res.json(response(400, '无效的分工ID'));
+    }
+    await pool.query('DELETE FROM t_pm_task WHERE f_id = ?', [taskId]);
     res.json(response(200, '分工删除成功'));
   } catch (err) { res.json(response(500, err.message)); }
 });

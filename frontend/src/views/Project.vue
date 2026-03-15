@@ -564,6 +564,11 @@ const editTask = (row) => {
 }
 
 const deleteTask = (row) => {
+  // Validate f_id exists
+  if (!row.f_id || row.f_id === 'undefined') {
+    ElMessage.error('分工ID无效，无法删除')
+    return
+  }
   ElMessageBox.confirm('确认删除此分工？', '警告', { type: 'warning' }).then(async () => {
     try {
       const res = await fetch(API_URL + '/task/' + row.f_id, {
