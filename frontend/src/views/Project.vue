@@ -479,10 +479,16 @@ const submitFeature = async () => {
     return
   }
   try {
+    // Clean up data - convert undefined/empty strings to null
+    const cleanData = {}
+    for (const [key, value] of Object.entries(featureForm.value)) {
+      cleanData[key] = (value === '' || value === undefined || value === null) ? null : value
+    }
+    
     const res = await fetch(API_URL + '/feature/' + featureForm.value.id, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
-      body: JSON.stringify(featureForm.value)
+      body: JSON.stringify(cleanData)
     })
     const data = await res.json()
     if (data.code === 200) {
