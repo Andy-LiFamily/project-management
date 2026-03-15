@@ -53,8 +53,9 @@
         <el-form-item label="已上传文件" v-if="uploadedFiles.length > 0">
           <el-table :data="uploadedFiles" size="small" border>
             <el-table-column prop="fileName" label="文件名" />
-            <el-table-column label="操作" width="80">
-              <template #default="{ $index }">
+            <el-table-column label="操作" width="150">
+              <template #default="{ $index, row }">
+                <el-button size="small" type="primary" @click="downloadFile(row.path)">下载</el-button>
                 <el-button size="small" type="danger" @click="removeFile($index)">删除</el-button>
               </template>
             </el-table-column>
@@ -284,6 +285,13 @@ const onUploadError = (err, file, fileList) => {
 const removeFile = (index) => {
   uploadedFiles.value.splice(index, 1)
   featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
+}
+
+const downloadFile = (filePath) => {
+  if (filePath) {
+    const url = 'https://pm-backend.zeabur.app' + filePath
+    window.open(url, '_blank')
+  }
 }
 
 const submitFeature = async () => {
