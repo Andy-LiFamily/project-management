@@ -174,6 +174,7 @@
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
             <el-button size="small" @click="editTask(row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -500,6 +501,22 @@ const editTask = (row) => {
   isTaskEdit.value = true
   taskListVisible.value = false
   taskDialogVisible.value = true
+}
+
+const deleteTask = (row) => {
+  ElMessageBox.confirm('确认删除此分工？', '警告', { type: 'warning' }).then(async () => {
+    try {
+      const res = await fetch(API_URL + '/task/' + row.f_id, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+      })
+      const data = await res.json()
+      if (data.code === 200) {
+        ElMessage.success('删除成功')
+        viewTasks({ f_id: row.f_feature_id })
+      }
+    } catch (e) { ElMessage.error('删除失败') }
+  }).catch(() => {})
 }
 
 const getTaskStatusType = (status) => {

@@ -268,6 +268,13 @@ app.put('/api/pm/task/:id', authMiddleware, async (req, res) => {
   } catch (err) { res.json(response(500, err.message)); }
 });
 
+app.delete('/api/pm/task/:id', authMiddleware, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM t_pm_task WHERE f_id = ?', [req.params.id]);
+    res.json(response(200, '分工删除成功'));
+  } catch (err) { res.json(response(500, err.message)); }
+});
+
 // ============ Supplier APIs ============
 app.get('/api/pm/supplier', authMiddleware, async (req, res) => {
   try {
