@@ -239,7 +239,19 @@ const handleAddFeature = () => {
 const editFeature = (row) => {
   const docPath = row.f_document_path || ''
   uploadedFiles.value = docPath ? docPath.split(',').filter(p => p).map(p => ({ fileName: p.split('/').pop(), path: p })) : []
-  featureForm.value = { ...row, featureName: row.f_feature_name, purpose: row.f_purpose, ownerId: row.f_owner_id, ownerName: row.f_owner_name, createDate: row.f_create_date, targetDate: row.f_target_date || '', documentPath: docPath }
+  featureForm.value = { 
+    f_id: row.f_id,
+    featureName: row.f_feature_name, 
+    purpose: row.f_purpose, 
+    ownerId: row.f_owner_id, 
+    ownerName: row.f_owner_name, 
+    createDate: row.f_create_date, 
+    targetDate: row.f_target_date || '',
+    supplierId: row.f_supplier_id || null,
+    status: row.f_status || 'pending',
+    summary: row.f_summary || '',
+    documentPath: docPath
+  }
   isFeatureEdit.value = true
   featureDialogVisible.value = true
 }
@@ -249,13 +261,24 @@ const onOwnerChange = (val) => {
   if (u) featureForm.value.ownerName = u.f_user_name
 }
 
-const onUploadSuccess = (res) => {
-  if (res.code === 200) {
-    const fileName = res.data.split('/').pop()
-    uploadedFiles.value.push({ fileName: fileName, path: res.data })
-    featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
-    ElMessage.success('上传成功: ' + fileName)
+const onUploadSuccess = (response, file, fileList) => {
+  console.log('Upload response:', response)
+  if (response && response.code === 200) {
+    const filePath = response.data || response.message
+    if (filePath) {
+      const fileName = filePath.split('/').pop()
+      uploadedFiles.value.push({ fileName: fileName, path: filePath })
+      featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
+      ElMessage.success('上传成功: ' + fileName)
+    }
+  } else {
+    ElMessage.error('上传失败: ' + (response?.message || '未知错误'))
   }
+}
+
+const onUploadError = (err, file, fileList) => {
+  console.error('Upload error:', err)
+  ElMessage.error('上传失败')
 }
 
 const removeFile = (index) => {
@@ -275,9 +298,18 @@ const submitFeature = async () => {
     formData.append('ownerName', featureForm.value.ownerName || '')
     formData.append('createDate', featureForm.value.createDate)
     formData.append('targetDate', featureForm.value.targetDate || '')
+    formData.append('supplierId', featureForm.value.supplierId || '')
+    formData.append('documentPath', featureForm.value.documentPath || '')
+    formData.append('status', featureForm.value.status || 'pending')
+    formData.append('summary', featureForm.value.summary || '')
     
-    const res = await fetch(API_URL + '/feature', {
-      method: 'POST',
+    const url = isFeatureEdit.value 
+      ? API_URL + '/feature/' + featureForm.value.f_id 
+      : API_URL + '/feature'
+    const method = isFeatureEdit.value ? 'PUT' : 'POST'
+    
+    const res = await fetch(url, {
+      method: method,
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
       body: formData
     })
@@ -286,8 +318,13 @@ const submitFeature = async () => {
       ElMessage.success(isFeatureEdit.value ? '更新成功' : '创建成功')
       featureDialogVisible.value = false
       fetchFeatures()
+    } else {
+      ElMessage.error(data.message || '操作失败')
     }
-  } catch (e) { ElMessage.error('操作失败') }
+  } catch (e) { 
+    console.error(e)
+    ElMessage.error('操作失败: ' + e.message) 
+  }
 }
 
 const deleteFeature = (row) => {

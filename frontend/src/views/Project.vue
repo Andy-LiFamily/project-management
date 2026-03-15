@@ -137,7 +137,12 @@
           <el-input v-model="featureForm.summary" type="textarea" :rows="3" placeholder="填写总结后才能标记为完成" />
         </el-form-item>
         <el-form-item label="规划文档">
-          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess" :show-file-list="false">
+          <el-upload 
+            :action="uploadUrl" 
+            :headers="uploadHeaders" 
+            :on-success="onUploadSuccess" 
+            :on-error="onUploadError"
+            :show-file-list="false">
             <el-button>上传文件</el-button>
           </el-upload>
         </el-form-item>
@@ -429,13 +434,24 @@ const onStatusChange = (val) => {
   }
 }
 
-const onUploadSuccess = (res) => {
-  if (res.code === 200) {
-    const fileName = res.data.split('/').pop()
-    uploadedFiles.value.push({ fileName: fileName, path: res.data })
-    featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
-    ElMessage.success('上传成功')
+const onUploadSuccess = (response, file, fileList) => {
+  console.log('Upload response:', response)
+  if (response && response.code === 200) {
+    const filePath = response.data || response.message
+    if (filePath) {
+      const fileName = filePath.split('/').pop()
+      uploadedFiles.value.push({ fileName: fileName, path: filePath })
+      featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
+      ElMessage.success('上传成功: ' + fileName)
+    }
+  } else {
+    ElMessage.error('上传失败: ' + (response?.message || '未知错误'))
   }
+}
+
+const onUploadError = (err, file, fileList) => {
+  console.error('Upload error:', err)
+  ElMessage.error('上传失败')
 }
 
 const removeFile = (index) => {
