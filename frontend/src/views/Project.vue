@@ -258,6 +258,7 @@ const featureForm = ref({ id: null, featureName: '', purpose: '', ownerId: null,
 const uploadedFiles = ref([])
 const isFeatureEdit = ref(false)
 const taskForm = ref({ id: null, featureId: null, taskContent: '', targetDate: '', ownerId: null, ownerName: '', supplierId: null, status: '未开展', progress: 0 })
+const currentFeatureId = ref(null)
 
 const user = JSON.parse(localStorage.getItem('pm_user') || '{}')
 const isAdmin = computed(() => user.role === 'admin')
@@ -532,6 +533,7 @@ const deleteFeature = () => {
 
 // Task functions
 const viewTasks = async (row) => {
+  currentFeatureId.value = row.f_id
   try {
     const res = await fetch(API_URL + '/task?featureId=' + row.f_id, {
       headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
@@ -571,9 +573,21 @@ const deleteTask = (row) => {
       const data = await res.json()
       if (data.code === 200) {
         ElMessage.success('删除成功')
-        viewTasks({ f_id: row.f_feature_id })
+        // Refresh task list - use f_feature_id if available
+        if (row.f_feature_id) {
+          viewTasks({ f_id: row.f_feature_id })
+        } else if (currentFeatureId.value) {
+          viewTasks({ f_id: currentFeatureId.value })
+        } else {
+          fetchAllTasks()
+        }
+      } else {
+        ElMessage.error(data.message || '删除失败')
       }
-    } catch (e) { ElMessage.error('删除失败') }
+    } catch (e) { 
+      console.error(e)
+      ElMessage.error('删除失败') 
+    }
   }).catch(() => {})
 }
 
