@@ -60,12 +60,16 @@ const response = (code, message, data = null) => ({ code, message, data });
 
 // Helper to format date
 const formatDate = (dateVal) => {
-  if (!dateVal) return null;
+  if (!dateVal || dateVal === 'undefined') return null;
   if (typeof dateVal === 'string') {
-    // Handle ISO format like '2026-03-14T00:00:00.000Z'
     return dateVal.split('T')[0];
   }
   return dateVal;
+};
+
+const toNull = (val) => {
+  if (val === undefined || val === 'undefined' || val === '') return null;
+  return val;
 };
 
 // Auth Middleware
@@ -232,7 +236,7 @@ app.put('/api/pm/feature/:id', authMiddleware, async (req, res) => {
     const { featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId, status, summary, completeDate, documentPath } = req.body;
     await pool.query(
       'UPDATE t_pm_feature SET f_feature_name=?, f_purpose=?, f_owner_id=?, f_owner_name=?, f_create_date=?, f_target_date=?, f_supplier_id=?, f_status=?, f_summary=?, f_complete_date=?, f_document_path=? WHERE f_id=?',
-      [featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, status, summary, formatDate(completeDate), documentPath, req.params.id]
+      [featureName, purpose, toNull(ownerId), ownerName, formatDate(createDate), formatDate(targetDate), toNull(supplierId), status, summary, formatDate(completeDate), documentPath, req.params.id]
     );
     res.json(response(200, '更新成功'));
   } catch (err) { res.json(response(500, err.message)); }
