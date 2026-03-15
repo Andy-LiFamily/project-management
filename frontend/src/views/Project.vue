@@ -77,10 +77,12 @@
       </el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
-          <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-          <el-button size="small" type="primary" @click="viewFeatures(row, 'software')">软件</el-button>
-          <el-button size="small" type="success" @click="viewFeatures(row, 'hardware')">硬件</el-button>
-          <el-button size="small" type="danger" v-if="isAdmin" @click="handleDelete(row)">删除</el-button>
+          <div class="action-buttons">
+            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button size="small" type="primary" @click="viewFeatures(row, 'software')">软件</el-button>
+            <el-button size="small" type="success" @click="viewFeatures(row, 'hardware')">硬件</el-button>
+            <el-button size="small" type="danger" v-if="isAdmin" @click="handleDelete(row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -156,8 +158,10 @@
             <el-table-column prop="fileName" label="文件名" />
             <el-table-column label="操作" width="150">
               <template #default="{ $index, row }">
-                <el-button size="small" type="primary" @click="downloadFile(row.path)">下载</el-button>
-                <el-button size="small" type="danger" @click="removeFile($index)" v-if="isAdmin">删除</el-button>
+                <div class="action-buttons">
+                  <el-button size="small" type="primary" @click="downloadFile(row.path)">下载</el-button>
+                  <el-button size="small" type="danger" @click="removeFile($index)" v-if="isAdmin">删除</el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -185,8 +189,10 @@
         </el-table-column>
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
-            <el-button size="small" @click="editTask(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteTask(row)" v-if="isAdmin">删除</el-button>
+            <div class="action-buttons">
+              <el-button size="small" @click="editTask(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="deleteTask(row)" v-if="isAdmin">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
