@@ -153,7 +153,7 @@
             <el-table-column label="操作" width="150">
               <template #default="{ $index, row }">
                 <el-button size="small" type="primary" @click="downloadFile(row.path)">下载</el-button>
-                <el-button size="small" type="danger" @click="removeFile($index)">删除</el-button>
+                <el-button size="small" type="danger" @click="removeFile($index)" v-if="isAdmin">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -161,7 +161,7 @@
       </el-form>
       <template #footer>
         <el-button @click="featureDialogVisible = false">取消</el-button>
-        <el-button type="danger" @click="deleteFeature">删除</el-button>
+        <el-button type="danger" @click="deleteFeature" v-if="isAdmin">删除</el-button>
         <el-button type="primary" @click="submitFeature">确定</el-button>
       </template>
     </el-dialog>
@@ -182,7 +182,7 @@
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
             <el-button size="small" @click="editTask(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button>
+            <el-button size="small" type="danger" @click="deleteTask(row)" v-if="isAdmin">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

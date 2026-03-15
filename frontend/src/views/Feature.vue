@@ -56,7 +56,7 @@
             <el-table-column label="操作" width="150">
               <template #default="{ $index, row }">
                 <el-button size="small" type="primary" @click="downloadFile(row.path)">下载</el-button>
-                <el-button size="small" type="danger" @click="removeFile($index)">删除</el-button>
+                <el-button size="small" type="danger" @click="removeFile($index)" v-if="isAdmin">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
