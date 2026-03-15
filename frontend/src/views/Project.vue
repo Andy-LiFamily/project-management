@@ -605,18 +605,34 @@ const submitTask = async () => {
     return
   }
   try {
-    const res = await fetch(API_URL + '/task', {
-      method: 'POST',
+    // Clean up data
+    const cleanData = {}
+    for (const [key, value] of Object.entries(taskForm.value)) {
+      cleanData[key] = (value === '' || value === undefined || value === null) ? null : value
+    }
+    
+    const url = isTaskEdit.value && taskForm.value.id 
+      ? API_URL + '/task/' + taskForm.value.id 
+      : API_URL + '/task'
+    const method = isTaskEdit.value && taskForm.value.id ? 'PUT' : 'POST'
+    
+    const res = await fetch(url, {
+      method: method,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('pm_token')}` },
-      body: JSON.stringify(taskForm.value)
+      body: JSON.stringify(cleanData)
     })
     const data = await res.json()
     if (data.code === 200) {
       ElMessage.success(isTaskEdit.value ? '更新成功' : '创建成功')
       taskDialogVisible.value = false
       fetchAllTasks()
+    } else {
+      ElMessage.error(data.message || '操作失败')
     }
-  } catch (e) { ElMessage.error('操作失败') }
+  } catch (e) { 
+    console.error(e)
+    ElMessage.error('操作失败') 
+  }
 }
 
 onMounted(() => { fetchData(); fetchAllFeatures(); fetchAllTasks(); fetchUsers(); fetchSuppliers() })
