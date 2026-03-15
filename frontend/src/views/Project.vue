@@ -226,7 +226,7 @@
 
 <script setup>
 const API_URL = import.meta.env.PROD ? 'https://pm-backend.zeabur.app' + '/api/pm' : import.meta.env.VITE_API_URL || '/api/pm';
-const uploadUrl = API_URL + '/feature'
+const uploadUrl = API_URL + '/feature/upload'
 const uploadHeaders = { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
 
 import { ref, computed, onMounted } from 'vue'

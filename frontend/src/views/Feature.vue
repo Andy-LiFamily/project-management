@@ -166,7 +166,7 @@ const taskDialogVisible = ref(false)
 const taskFormVisible = ref(false)
 const isFeatureEdit = ref(false)
 const isTaskEdit = ref(false)
-const uploadUrl = '/api/pm/feature'
+const uploadUrl = '/api/pm/feature/upload'
 const uploadHeaders = { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
 
 const featureForm = ref({ featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', documentPath: '' })

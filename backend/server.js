@@ -203,6 +203,19 @@ app.get('/api/pm/feature', authMiddleware, async (req, res) => {
   } catch (err) { res.json(response(500, err.message)); }
 });
 
+// Dedicated file upload endpoint
+app.post('/api/pm/feature/upload', authMiddleware, upload.single('document'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.json(response(400, '没有文件'));
+    }
+    const filePath = '/uploads/' + req.file.filename;
+    res.json(response(200, '上传成功', filePath));
+  } catch (err) { 
+    res.json(response(500, err.message)); 
+  }
+});
+
 app.post('/api/pm/feature', authMiddleware, upload.single('document'), async (req, res) => {
   try {
     const { projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId, documentPath } = req.body;
