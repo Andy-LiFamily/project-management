@@ -216,15 +216,14 @@ app.post('/api/pm/feature/upload', authMiddleware, upload.single('document'), as
   }
 });
 
-app.post('/api/pm/feature', authMiddleware, upload.single('document'), async (req, res) => {
+app.post('/api/pm/feature', authMiddleware, async (req, res) => {
   try {
     const { projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId, documentPath } = req.body;
-    const newDocPath = req.file ? '/uploads/' + req.file.filename : documentPath;
     await pool.query(
       'INSERT INTO t_pm_feature (f_project_id, f_branch, f_feature_name, f_purpose, f_owner_id, f_owner_name, f_create_date, f_target_date, f_supplier_id, f_document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [projectId, branch, featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, newDocPath]
+      [projectId, branch, featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, documentPath]
     );
-    res.json(response(200, '功能创建成功', newDocPath));
+    res.json(response(200, '功能创建成功', documentPath));
   } catch (err) { res.json(response(500, err.message)); }
 });
 
