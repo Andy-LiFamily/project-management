@@ -142,6 +142,7 @@
             :headers="uploadHeaders" 
             :on-success="onUploadSuccess" 
             :on-error="onUploadError"
+            name="document"
             :show-file-list="false">
             <el-button>上传文件</el-button>
           </el-upload>

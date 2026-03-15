@@ -46,7 +46,7 @@
           <el-date-picker v-model="featureForm.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择预计完成日期" />
         </el-form-item>
         <el-form-item label="规划文档">
-          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess" :show-file-list="false">
+          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess" name="document" :show-file-list="false">
             <el-button>上传文件</el-button>
           </el-upload>
         </el-form-item>
@@ -132,7 +132,7 @@
           <el-input-number v-model="taskForm.progress" :min="0" :max="100" />
         </el-form-item>
         <el-form-item label="文档">
-          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onTaskUploadSuccess">
+          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onTaskUploadSuccess" name="document">
             <el-button>上传文件</el-button>
           </el-upload>
         </el-form-item>
