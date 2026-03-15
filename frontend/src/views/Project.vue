@@ -26,9 +26,11 @@
                   </el-table-column>
                   <el-table-column label="操作" width="150">
                     <template #default="{ row }">
-                      <el-button size="small" @click="editFeature(row)">编辑</el-button>
-                      <el-button size="small" type="primary" @click="viewTasks(row)">分工</el-button>
-                      <el-button size="small" type="primary" @click="addTask(row)">新增</el-button>
+                      <div class="action-buttons">
+                        <el-button size="small" @click="editFeature(row)">编辑</el-button>
+                        <el-button size="small" type="primary" @click="viewTasks(row)">分工</el-button>
+                        <el-button size="small" type="primary" @click="addTask(row)">新增</el-button>
+                      </div>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -51,9 +53,11 @@
                   </el-table-column>
                   <el-table-column label="操作" width="150">
                     <template #default="{ row }">
-                      <el-button size="small" @click="editFeature(row)">编辑</el-button>
-                      <el-button size="small" type="primary" @click="viewTasks(row)">分工</el-button>
-                      <el-button size="small" type="primary" @click="addTask(row)">新增</el-button>
+                      <div class="action-buttons">
+                        <el-button size="small" @click="editFeature(row)">编辑</el-button>
+                        <el-button size="small" type="primary" @click="viewTasks(row)">分工</el-button>
+                        <el-button size="small" type="primary" @click="addTask(row)">新增</el-button>
+                      </div>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -641,4 +645,5 @@ onMounted(() => { fetchData(); fetchAllFeatures(); fetchAllTasks(); fetchUsers()
 <style scoped>
 .project-page h2 { margin-bottom: 20px; }
 .feature-expand { padding: 10px 20px; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
 </style>
