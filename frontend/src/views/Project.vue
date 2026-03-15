@@ -161,6 +161,7 @@
       </el-form>
       <template #footer>
         <el-button @click="featureDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="deleteFeature">删除</el-button>
         <el-button type="primary" @click="submitFeature">确定</el-button>
       </template>
     </el-dialog>
@@ -495,6 +496,28 @@ const submitFeature = async () => {
     console.error(e)
     ElMessage.error('更新失败: ' + e.message) 
   }
+}
+
+const deleteFeature = () => {
+  ElMessageBox.confirm('确认删除此功能？删除后无法恢复！', '警告', { type: 'warning' }).then(async () => {
+    try {
+      const res = await fetch(API_URL + '/feature/' + featureForm.value.f_id, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
+      })
+      const data = await res.json()
+      if (data.code === 200) {
+        ElMessage.success('删除成功')
+        featureDialogVisible.value = false
+        fetchAllFeatures()
+      } else {
+        ElMessage.error(data.message || '删除失败')
+      }
+    } catch (e) { 
+      console.error(e)
+      ElMessage.error('删除失败') 
+    }
+  }).catch(() => {})
 }
 
 // Task functions
