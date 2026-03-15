@@ -46,9 +46,19 @@
           <el-date-picker v-model="featureForm.targetDate" type="date" value-format="YYYY-MM-DD" placeholder="选择预计完成日期" />
         </el-form-item>
         <el-form-item label="规划文档">
-          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess">
+          <el-upload :action="uploadUrl" :headers="uploadHeaders" :on-success="onUploadSuccess" :show-file-list="false">
             <el-button>上传文件</el-button>
           </el-upload>
+        </el-form-item>
+        <el-form-item label="已上传文件" v-if="uploadedFiles.length > 0">
+          <el-table :data="uploadedFiles" size="small" border>
+            <el-table-column prop="fileName" label="文件名" />
+            <el-table-column label="操作" width="80">
+              <template #default="{ $index }">
+                <el-button size="small" type="danger" @click="removeFile($index)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -160,6 +170,7 @@ const uploadUrl = '/api/pm/feature'
 const uploadHeaders = { Authorization: `Bearer ${localStorage.getItem('pm_token')}` }
 
 const featureForm = ref({ featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: '', targetDate: '', documentPath: '' })
+const uploadedFiles = ref([])
 const taskForm = ref({ taskContent: '', targetDate: '', ownerId: null, ownerName: '', supplierId: null, status: '未开展', progress: 0, documentPath: '' })
 const summaryForm = ref({ summary: '' })
 
@@ -220,12 +231,15 @@ const getTaskStatusType = (status) => {
 
 const handleAddFeature = () => {
   featureForm.value = { featureName: '', purpose: '', ownerId: null, ownerName: '', createDate: new Date().toISOString().split('T')[0], targetDate: '', documentPath: '' }
+  uploadedFiles.value = []
   isFeatureEdit.value = false
   featureDialogVisible.value = true
 }
 
 const editFeature = (row) => {
-  featureForm.value = { ...row, featureName: row.f_feature_name, purpose: row.f_purpose, ownerId: row.f_owner_id, ownerName: row.f_owner_name, createDate: row.f_create_date, targetDate: row.f_target_date || '' }
+  const docPath = row.f_document_path || ''
+  uploadedFiles.value = docPath ? docPath.split(',').filter(p => p).map(p => ({ fileName: p.split('/').pop(), path: p })) : []
+  featureForm.value = { ...row, featureName: row.f_feature_name, purpose: row.f_purpose, ownerId: row.f_owner_id, ownerName: row.f_owner_name, createDate: row.f_create_date, targetDate: row.f_target_date || '', documentPath: docPath }
   isFeatureEdit.value = true
   featureDialogVisible.value = true
 }
@@ -236,8 +250,17 @@ const onOwnerChange = (val) => {
 }
 
 const onUploadSuccess = (res) => {
-  if (res.code === 200) featureForm.value.documentPath = res.data
-  ElMessage.success('上传成功')
+  if (res.code === 200) {
+    const fileName = res.data.split('/').pop()
+    uploadedFiles.value.push({ fileName: fileName, path: res.data })
+    featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
+    ElMessage.success('上传成功: ' + fileName)
+  }
+}
+
+const removeFile = (index) => {
+  uploadedFiles.value.splice(index, 1)
+  featureForm.value.documentPath = uploadedFiles.value.map(f => f.path).join(',')
 }
 
 const submitFeature = async () => {
