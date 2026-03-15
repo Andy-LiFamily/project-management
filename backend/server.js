@@ -205,22 +205,22 @@ app.get('/api/pm/feature', authMiddleware, async (req, res) => {
 
 app.post('/api/pm/feature', authMiddleware, upload.single('document'), async (req, res) => {
   try {
-    const { projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId } = req.body;
-    const documentPath = req.file ? '/uploads/' + req.file.filename : null;
+    const { projectId, branch, featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId, documentPath } = req.body;
+    const newDocPath = req.file ? '/uploads/' + req.file.filename : documentPath;
     await pool.query(
       'INSERT INTO t_pm_feature (f_project_id, f_branch, f_feature_name, f_purpose, f_owner_id, f_owner_name, f_create_date, f_target_date, f_supplier_id, f_document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [projectId, branch, featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, documentPath]
+      [projectId, branch, featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, newDocPath]
     );
-    res.json(response(200, '功能创建成功'));
+    res.json(response(200, '功能创建成功', newDocPath));
   } catch (err) { res.json(response(500, err.message)); }
 });
 
 app.put('/api/pm/feature/:id', authMiddleware, async (req, res) => {
   try {
-    const { featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId, status, summary, completeDate } = req.body;
+    const { featureName, purpose, ownerId, ownerName, createDate, targetDate, supplierId, status, summary, completeDate, documentPath } = req.body;
     await pool.query(
-      'UPDATE t_pm_feature SET f_feature_name=?, f_purpose=?, f_owner_id=?, f_owner_name=?, f_create_date=?, f_target_date=?, f_supplier_id=?, f_status=?, f_summary=?, f_complete_date=? WHERE f_id=?',
-      [featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, status, summary, formatDate(completeDate), req.params.id]
+      'UPDATE t_pm_feature SET f_feature_name=?, f_purpose=?, f_owner_id=?, f_owner_name=?, f_create_date=?, f_target_date=?, f_supplier_id=?, f_status=?, f_summary=?, f_complete_date=?, f_document_path=? WHERE f_id=?',
+      [featureName, purpose, ownerId, ownerName, formatDate(createDate), formatDate(targetDate), supplierId, status, summary, formatDate(completeDate), documentPath, req.params.id]
     );
     res.json(response(200, '更新成功'));
   } catch (err) { res.json(response(500, err.message)); }
