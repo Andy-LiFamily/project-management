@@ -105,7 +105,7 @@ model Feature {
   project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdBy     User        @relation("FeatureCreator", fields: [createdById], references: [id])
   tasks         Task[]
-  files         File[]
+  // Note: files are linked via File.entityType='FEATURE' + File.entityId=feature.id
 }
 
 model Task {
@@ -128,7 +128,7 @@ model Task {
   project       Project     @relation(fields: [projectId], references: [id])
   vendor        Vendor?     @relation(fields: [vendorId], references: [id])
   createdBy     User       @relation("TaskCreator", fields: [createdById], references: [id])
-  files         File[]
+  // Note: files are linked via File.entityType='TASK' + File.entityId=task.id
 }
 
 model Vendor {
@@ -159,6 +159,7 @@ model File {
 
   // Relations
   uploader    User       @relation("FileUploader", fields: [uploaderId], references: [id])
-  feature     Feature?  @relation("FeatureFiles", fields: [entityId], references: [id])
-  task        Task?     @relation("TaskFiles", fields: [entityId], references: [id])
+
+  // Index for fast lookups by entity
+  @@index([entityType, entityId])
 }
