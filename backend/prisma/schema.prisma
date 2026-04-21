@@ -81,6 +81,7 @@ model Project {
   // Relations
   createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
   features    Feature[]
+  tasks       Task[]
 }
 
 model Feature {
@@ -158,4 +159,6 @@ model File {
 
   // Relations
   uploader    User       @relation("FileUploader", fields: [uploaderId], references: [id])
+  feature     Feature?  @relation("FeatureFiles", fields: [entityId], references: [id])
+  task        Task?     @relation("TaskFiles", fields: [entityId], references: [id])
 }

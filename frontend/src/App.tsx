@@ -1,25 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
-import Features from './pages/Features';
 import FeatureDetail from './pages/FeatureDetail';
 import Vendors from './pages/Vendors';
 import Users from './pages/Users';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
-
-const api = axios.create({ baseURL: API_URL, withCredentials: true });
-
-api.interceptors.response.use(r => r, (error) => {
-  if (error.response?.status === 401) window.location.href = '/login';
-  return Promise.reject(error);
-});
-
-export { api };
 
 function Navbar({ user, onLogout }: { user: any; onLogout: () => void }) {
   const location = useLocation();
@@ -47,7 +34,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {}).finally(() => setLoading(false));
+    import('./utils/api').then(m => m.api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {}).finally(() => setLoading(false)));
   }, []);
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>加载中...</div>;
@@ -59,11 +46,12 @@ function App() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {});
+    import('./utils/api').then(m => m.api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {}));
   }, []);
 
   const logout = async () => {
-    await api.post('/api/auth/logout');
+    const m = await import('./utils/api');
+    await m.api.post('/api/auth/logout');
     window.location.href = '/login';
   };
 

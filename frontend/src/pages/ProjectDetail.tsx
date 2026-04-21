@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api, Modal } from './Projects';
+import { Modal } from './Projects';
+import { api } from '../utils/api';
 
 const statusMap: Record<string, string> = {
   NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成'

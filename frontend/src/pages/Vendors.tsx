@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api, Modal } from './Projects';
+import { Modal } from './Projects';
+import { api } from '../utils/api';
 
 export default function Vendors() {
   const [vendors, setVendors] = useState<any[]>([]);

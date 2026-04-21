@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api } from '../App';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { api } from '../utils/api';
+
 
 const statusMap: Record<string, { label: string; cls: string }> = {
   NOT_STARTED: { label: '未开展', cls: 'badge-not-started' },
