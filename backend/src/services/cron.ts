@@ -21,21 +21,16 @@ const checkOverdueItems = async () => {
     }
 
     const users = await prisma.user.findMany({ where: { active: true } });
-    const tasks = await prisma.task.findMany({
-      where: { featureId: feature.id },
-      select: { manager: true }
-    });
-
     await sendOverdueEmail(users, {
       projectName: feature.project.name,
       featureName: feature.name,
-      featureManager: feature.manager,
+      featureManager: feature.manager || undefined,
       plannedDate: feature.plannedEnd,
       type: 'feature'
     });
   }
 
-  const tasks = await prisma.task.findMany({
+  const allTasks = await prisma.task.findMany({
     where: {
       status: { not: 'COMPLETED' },
       targetDate: { lt: now }
@@ -46,7 +41,7 @@ const checkOverdueItems = async () => {
     }
   });
 
-  for (const task of tasks) {
+  for (const task of allTasks) {
     if (task.status !== 'DELAYED') {
       await prisma.task.update({
         where: { id: task.id },
@@ -59,8 +54,8 @@ const checkOverdueItems = async () => {
       projectName: task.feature.project.name,
       featureName: task.feature.name,
       taskContent: task.workContent,
-      taskManager: task.manager,
-      featureManager: task.feature.manager,
+      taskManager: task.manager || undefined,
+      featureManager: task.feature.manager || undefined,
       plannedDate: task.targetDate,
       type: 'task'
     });

@@ -5,7 +5,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 const router = Router();
 
 router.get('/stats', authenticate, async (req: AuthRequest, res: Response) => {
-  const [projectCount, activeProjects, delayedProjects, featureCount, activeFeatures] = await Promise.all([
+  const [projectCount, activeProjects, delayedProjects, featureCount, activeFeatures, taskCount, vendorCount] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { status: 'IN_PROGRESS' } }),
     prisma.project.count({ where: { status: 'DELAYED' } }),

@@ -10,8 +10,7 @@ router.get('/project/:projectId', authenticate, async (req: AuthRequest, res: Re
     where: { projectId: req.params.projectId },
     include: {
       createdBy: { select: { username: true } },
-      tasks: { include: { vendor: true } },
-      files: true
+      tasks: { include: { vendor: true } }
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -43,8 +42,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     include: {
       project: true,
       createdBy: { select: { username: true } },
-      tasks: { include: { vendor: true, files: true } },
-      files: true
+      tasks: { include: { vendor: true } }
     }
   });
   if (!feature) return res.status(404).json({ error: '功能不存在' });
@@ -81,7 +79,7 @@ router.put('/:id/complete', authenticate, async (req: AuthRequest, res: Response
       data: { status: 'COMPLETED', summary, actualEnd: new Date() }
     });
     const users = await prisma.user.findMany({ where: { active: true } });
-    await sendFeatureCompleteEmail(users, feature.project, updated, feature.tasks, summary);
+    await sendFeatureCompleteEmail(users, feature.project, updated, feature.tasks as any, summary);
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: '完成操作失败' });

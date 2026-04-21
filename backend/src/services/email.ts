@@ -56,7 +56,7 @@ export const sendFeatureCompleteEmail = async (
   users: User[],
   project: Project,
   feature: Feature,
-  tasks: (Task & { vendor?: { name: string } | null }),
+  tasks: any[],
   summary: string
 ) => {
   const subject = `【功能完成】${project.name} - ${feature.name}`;

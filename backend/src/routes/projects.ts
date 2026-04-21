@@ -38,8 +38,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
       createdBy: { select: { username: true } },
       features: {
         include: {
-          tasks: true,
-          files: true
+          tasks: true
         }
       }
     }

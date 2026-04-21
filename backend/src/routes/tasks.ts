@@ -9,8 +9,7 @@ router.get('/feature/:featureId', authenticate, async (req: AuthRequest, res: Re
     where: { featureId: req.params.featureId },
     include: {
       vendor: true,
-      createdBy: { select: { username: true } },
-      files: true
+      createdBy: { select: { username: true } }
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -39,7 +38,7 @@ router.post('/feature/:featureId', authenticate, async (req: AuthRequest, res: R
 router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   const task = await prisma.task.findUnique({
     where: { id: req.params.id },
-    include: { vendor: true, files: true, feature: true }
+    include: { vendor: true, feature: true }
   });
   if (!task) return res.status(404).json({ error: '任务不存在' });
   res.json(task);
