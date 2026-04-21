@@ -1,0 +1,67 @@
+import { Router, Response } from 'express';
+import { prisma } from '../utils/prisma.js';
+import { authenticate, AuthRequest, requireAdmin } from '../middleware/auth.js';
+
+const router = Router();
+
+router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
+  const projects = await prisma.project.findMany({
+    include: {
+      createdBy: { select: { username: true } },
+      features: { select: { id: true, status: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json(projects);
+});
+
+router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
+  const { name, client, manager, startDate, dueDate, remark } = req.body;
+  const project = await prisma.project.create({
+    data: {
+      name,
+      client: client || '内部',
+      manager,
+      startDate: new Date(startDate),
+      dueDate: new Date(dueDate),
+      remark,
+      createdById: req.user!.id
+    }
+  });
+  res.json(project);
+});
+
+router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
+  const project = await prisma.project.findUnique({
+    where: { id: req.params.id },
+    include: {
+      createdBy: { select: { username: true } },
+      features: {
+        include: {
+          tasks: true,
+          files: true
+        }
+      }
+    }
+  });
+  if (!project) return res.status(404).json({ error: '项目不存在' });
+  res.json(project);
+});
+
+router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
+  const { name, client, manager, startDate, dueDate, finishDate, status, remark } = req.body;
+  const data: any = { name, client, manager, remark };
+  if (startDate) data.startDate = new Date(startDate);
+  if (dueDate) data.dueDate = new Date(dueDate);
+  if (finishDate) data.finishDate = new Date(finishDate);
+  if (status) data.status = status;
+  const project = await prisma.project.update({ where: { id: req.params.id }, data });
+  res.json(project);
+});
+
+router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  await prisma.project.delete({ where: { id: req.params.id } });
+  res.json({ message: '项目已删除' });
+});
+
+export default router;

@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============== ENUMS ==============
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum ProjectStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DELAYED
+  COMPLETED
+}
+
+enum BranchType {
+  SOFTWARE
+  HARDWARE
+}
+
+enum FeatureStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DELAYED
+  COMPLETED
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DELAYED
+  COMPLETED
+}
+
+enum EntityType {
+  FEATURE
+  TASK
+}
+
+// ============== MODELS ==============
+
+model User {
+  id        String   @id @default(uuid())
+  username  String
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdProjects  Project[]  @relation("ProjectCreator")
+  createdFeatures Feature[]  @relation("FeatureCreator")
+  createdTasks    Task[]     @relation("TaskCreator")
+  uploadedFiles   File[]    @relation("FileUploader")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  client      String        @default("内部")
+  manager     String?
+  startDate   DateTime
+  dueDate     DateTime
+  finishDate  DateTime?
+  status      ProjectStatus @default(NOT_STARTED)
+  remark      String?
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
+  features    Feature[]
+}
+
+model Feature {
+  id            String        @id @default(uuid())
+  projectId     String
+  branchType    BranchType
+  name          String
+  purpose       String?
+  manager       String?
+  buildDate     DateTime?
+  plannedStart  DateTime
+  plannedEnd    DateTime
+  actualEnd     DateTime?
+  status        FeatureStatus @default(NOT_STARTED)
+  summary       String?
+  createdById   String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy     User        @relation("FeatureCreator", fields: [createdById], references: [id])
+  tasks         Task[]
+  files         File[]
+}
+
+model Task {
+  id            String      @id @default(uuid())
+  featureId     String
+  projectId     String
+  workContent   String
+  targetDate    DateTime
+  manager       String?
+  progress      Int         @default(0)
+  vendorId      String?
+  status        TaskStatus  @default(NOT_STARTED)
+  remark        String?
+  createdById   String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  feature       Feature     @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  project       Project     @relation(fields: [projectId], references: [id])
+  vendor        Vendor?     @relation(fields: [vendorId], references: [id])
+  createdBy     User       @relation("TaskCreator", fields: [createdById], references: [id])
+  files         File[]
+}
+
+model Vendor {
+  id            String   @id @default(uuid())
+  name          String
+  contactPerson String?
+  contactPhone String?
+  projectPerson String?
+  projectPhone String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  tasks         Task[]
+}
+
+model File {
+  id          String     @id @default(uuid())
+  entityType  EntityType
+  entityId    String
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  path        String
+  uploaderId  String
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  uploader    User       @relation("FileUploader", fields: [uploaderId], references: [id])
+}
