@@ -11,10 +11,16 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/api/auth/login', { email, password });
+      const res = await api.post('/api/auth/login', { email, password });
+      const { token, ...user } = res.data;
+      if (token) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      }
       navigate('/');
+      window.location.reload();
     } catch (err: any) {
-      setError(err.response?.data?.error || '登录失败');
+      setError(err.response?.data?.error || err.message || '登录失败');
     }
   };
 

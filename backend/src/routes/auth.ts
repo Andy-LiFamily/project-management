@@ -42,13 +42,7 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
       process.env.JWT_SECRET!,
       { expiresIn: '7d' }
     );
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-    res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    res.json({ token, id: user.id, username: user.username, email: user.email, role: user.role });
   } catch (error) {
     res.status(500).json({ error: '登录失败' });
   }

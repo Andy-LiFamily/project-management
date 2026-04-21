@@ -11,9 +11,21 @@ export interface AuthRequest extends Request {
   };
 }
 
+const getToken = (req: Request): string | null => {
+  // Try cookie first
+  const cookieToken = req.cookies?.token;
+  if (cookieToken) return cookieToken;
+  // Try Authorization header
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  return null;
+};
+
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
+    const token = getToken(req);
     if (!token) {
       return res.status(401).json({ error: '未登录' });
     }

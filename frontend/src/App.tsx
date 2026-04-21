@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, ReactNode } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -34,7 +34,16 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    import('./utils/api').then(m => m.api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {}).finally(() => setLoading(false)));
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+    setLoading(false);
   }, []);
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>加载中...</div>;
@@ -46,12 +55,20 @@ function App() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    import('./utils/api').then(m => m.api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {}));
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
   }, []);
 
-  const logout = async () => {
-    const m = await import('./utils/api');
-    await m.api.post('/api/auth/logout');
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     window.location.href = '/login';
   };
 
