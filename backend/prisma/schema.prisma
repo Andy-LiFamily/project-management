@@ -19,6 +19,7 @@ enum ProjectStatus {
   IN_PROGRESS
   DELAYED
   COMPLETED
+  TERMINATED
 }
 
 enum BranchType {
@@ -31,6 +32,7 @@ enum FeatureStatus {
   IN_PROGRESS
   DELAYED
   COMPLETED
+  TERMINATED
 }
 
 enum TaskStatus {
@@ -38,6 +40,7 @@ enum TaskStatus {
   IN_PROGRESS
   DELAYED
   COMPLETED
+  TERMINATED
 }
 
 enum EntityType {
