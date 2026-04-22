@@ -2,17 +2,13 @@ import { Router, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
 import { prisma } from '../utils/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
+  destination: (req, file, cb) => cb(null, process.env.UPLOAD_DIR || './uploads'),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuidv4()}${ext}`);
@@ -60,11 +56,47 @@ router.get('/:entityType/:entityId', authenticate, async (req: AuthRequest, res:
   res.json(files);
 });
 
+router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+    if (!file) return res.status(404).json({ error: '文件不存在' });
+
+    const fs = await import('fs');
+    const pathMod = await import('path');
+    const uploadDir = process.env.UPLOAD_DIR || './uploads';
+    const filePath = pathMod.join(uploadDir, file.filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: '文件未找到' });
+    }
+
+    const buffer = fs.readFileSync(filePath);
+    const base64 = buffer.toString('base64');
+
+    res.json({
+      filename: file.originalName,
+      mimeType: file.mimeType,
+      size: file.size,
+      data: base64
+    });
+  } catch (error) {
+    res.status(500).json({ error: '下载失败' });
+  }
+});
+
+router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
+  const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+  if (!file) return res.status(404).json({ error: '文件不存在' });
+  res.json(file);
+});
+
 router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   const file = await prisma.file.findUnique({ where: { id: req.params.id } });
   if (!file) return res.status(404).json({ error: '文件不存在' });
+  const fs = await import('fs');
+  const pathMod = await import('path');
   const uploadDir = process.env.UPLOAD_DIR || './uploads';
-  const filePath = path.join(uploadDir, file.filename);
+  const filePath = pathMod.join(uploadDir, file.filename);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   await prisma.file.delete({ where: { id: req.params.id } });
   res.json({ message: '文件已删除' });
