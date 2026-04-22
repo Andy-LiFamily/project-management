@@ -7,8 +7,16 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
+const uploadDir = process.env.UPLOAD_DIR || './uploads';
+
+// Ensure upload directory exists
+const fs = await import('fs');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, process.env.UPLOAD_DIR || './uploads'),
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuidv4()}${ext}`);
@@ -30,6 +38,7 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
   try {
     if (!req.file) return res.status(400).json({ error: '请选择文件' });
     const { entityType, entityId } = req.body;
+    console.log('File uploaded:', req.file);
     const file = await prisma.file.create({
       data: {
         entityType,
@@ -44,6 +53,7 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
     });
     res.json(file);
   } catch (error) {
+    console.error('Upload error:', error);
     res.status(500).json({ error: '上传失败' });
   }
 });
