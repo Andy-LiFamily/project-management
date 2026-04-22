@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal } from './Projects';
+import Modal from '../components/Modal';
 import { api } from '../utils/api';
 
 export default function Users() {
