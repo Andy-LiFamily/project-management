@@ -23,6 +23,9 @@ const prisma = new PrismaClient();
 
 app.locals.prisma = prisma;
 
+// Trust proxy for accurate rate limiting behind reverse proxy
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -31,7 +34,10 @@ app.use(cors({
 app.use(express.json());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false }
 }));
 
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
