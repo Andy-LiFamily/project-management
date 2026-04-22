@@ -10,7 +10,7 @@ RUN npm install
 
 COPY backend/ .
 RUN npx prisma generate
-RUN tsc
+RUN npm run build
 
 EXPOSE 8080
 
