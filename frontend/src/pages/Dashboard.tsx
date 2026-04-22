@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 
 
@@ -32,12 +33,12 @@ export default function Dashboard() {
         <h2 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>📊 数据概览</h2>
 
         <div className="stats-grid">
-          <div className="stat-card"><div className="value">{stats.projectCount || 0}</div><div className="label">项目总数</div></div>
-          <div className="stat-card"><div className="value" style={{ color: 'var(--success)' }}>{stats.activeProjects || 0}</div><div className="label">进行中</div></div>
-          <div className="stat-card"><div className="value" style={{ color: 'var(--danger)' }}>{stats.delayedProjects || 0}</div><div className="label">延误项目</div></div>
-          <div className="stat-card"><div className="value" style={{ color: 'var(--primary)' }}>{stats.featureCount || 0}</div><div className="label">功能总数</div></div>
-          <div className="stat-card"><div className="value">{stats.taskCount || 0}</div><div className="label">任务总数</div></div>
-          <div className="stat-card"><div className="value">{stats.vendorCount || 0}</div><div className="label">供应商</div></div>
+          <Link to="/projects" style={{ textDecoration: 'none' }}><div className="stat-card"><div className="value">{stats.projectCount || 0}</div><div className="label">项目总数</div></div></Link>
+          <Link to="/projects" style={{ textDecoration: 'none' }}><div className="stat-card"><div className="value" style={{ color: 'var(--success)' }}>{stats.activeProjects || 0}</div><div className="label">进行中</div></div></Link>
+          <Link to="/projects" style={{ textDecoration: 'none' }}><div className="stat-card"><div className="value" style={{ color: 'var(--danger)' }}>{stats.delayedProjects || 0}</div><div className="label">延误项目</div></div></Link>
+          <Link to="/projects" style={{ textDecoration: 'none' }}><div className="stat-card"><div className="value" style={{ color: 'var(--primary)' }}>{stats.featureCount || 0}</div><div className="label">功能总数</div></div></Link>
+          <Link to="/projects" style={{ textDecoration: 'none' }}><div className="stat-card"><div className="value">{stats.taskCount || 0}</div><div className="label">任务总数</div></div></Link>
+          <Link to="/vendors" style={{ textDecoration: 'none' }}><div className="stat-card"><div className="value">{stats.vendorCount || 0}</div><div className="label">供应商</div></div></Link>
         </div>
 
         <div className="card">
