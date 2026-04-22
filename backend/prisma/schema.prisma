@@ -149,6 +149,7 @@ model Vendor {
 
   // Relations
   tasks         Task[]
+  projects      Project[]
 }
 
 model File {
