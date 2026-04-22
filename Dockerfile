@@ -5,11 +5,11 @@ LABEL "framework"="express"
 WORKDIR /src
 RUN apk add --no-cache openssl
 
-# Ensure devDependencies are installed
-ENV NODE_ENV=development
+# Clear any npm config that might force --omit=dev
+RUN npm config set omit ""
 
 COPY backend/package*.json ./
-RUN npm install
+RUN npm install --omit=dev=false
 
 COPY backend/ .
 RUN npx prisma generate
