@@ -10,7 +10,6 @@ const router = Router();
 
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
 
-// Ensure upload directory exists at startup
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -34,11 +33,9 @@ const upload = multer({
   }
 });
 
+// File upload
 router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, res: Response) => {
   try {
-    console.log('POST /api/files called');
-    console.log('req.file:', req.file);
-    console.log('req.body:', req.body);
     if (!req.file) return res.status(400).json({ error: '请选择文件' });
     const { entityType, entityId } = req.body;
     const file = await prisma.file.create({
@@ -53,45 +50,43 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
         uploaderId: req.user!.id
       }
     });
-    console.log('File record created:', file.id);
     res.json(file);
   } catch (error: any) {
-    console.error('Upload error:', error);
+    console.error('Upload error:', error.message);
     res.status(500).json({ error: '上传失败: ' + (error.message || '未知错误') });
   }
 });
 
-router.get('/:entityType/:entityId', authenticate, async (req: AuthRequest, res: Response) => {
-  const files = await prisma.file.findMany({
-    where: { entityType: req.params.entityType as any, entityId: req.params.entityId },
-    include: { uploader: { select: { username: true } } }
-  });
-  res.json(files);
+// List files by entity
+router.get('/entity/:entityType/:entityId', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const files = await prisma.file.findMany({
+      where: { entityType: req.params.entityType as any, entityId: req.params.entityId },
+      include: { uploader: { select: { username: true } } }
+    });
+    res.json(files);
+  } catch (error: any) {
+    console.error('List files error:', error.message);
+    res.status(500).json({ error: '获取文件列表失败' });
+  }
 });
 
-// IMPORTANT: route with download BEFORE /:id to avoid matching issue
+// Download file
 router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    console.log(`[DOWNLOAD] Request for file ID: ${req.params.id}`);
-    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
-    if (!file) {
-      console.log('[DOWNLOAD] File not found in DB');
-      return res.status(404).json({ error: '文件不存在' });
-    }
-    console.log(`[DOWNLOAD] File found in DB: ${file.originalName}, path: ${file.path}, filename: ${file.filename}`);
+    const fileId = req.params.id;
+    const file = await prisma.file.findUnique({ where: { id: fileId } });
+    if (!file) return res.status(404).json({ error: '文件不存在' });
 
-    const resolvedPath = path.join(uploadDir, file.filename);
-    console.log(`[DOWNLOAD] Resolved path: ${resolvedPath}, exists: ${fs.existsSync(resolvedPath)}`);
+    const filePath = path.join(uploadDir, file.filename);
 
-    if (!fs.existsSync(resolvedPath)) {
-      console.log('[DOWNLOAD] File does not exist on disk at resolved path');
+    if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: '文件未找到' });
     }
 
-    const buffer = fs.readFileSync(resolvedPath);
-    console.log(`[DOWNLOAD] File read successfully, size: ${buffer.length}`);
-
+    const buffer = fs.readFileSync(filePath);
     const base64 = buffer.toString('base64');
+
     res.json({
       filename: file.originalName,
       mimeType: file.mimeType,
@@ -99,24 +94,36 @@ router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response
       data: base64
     });
   } catch (error: any) {
-    console.error('[DOWNLOAD] Error:', error.stack || error);
+    console.error('Download error:', error.message);
     res.status(500).json({ error: '下载失败: ' + (error.message || '未知错误') });
   }
 });
 
+// Get single file by ID
 router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
-  const file = await prisma.file.findUnique({ where: { id: req.params.id } });
-  if (!file) return res.status(404).json({ error: '文件不存在' });
-  res.json(file);
+  try {
+    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+    if (!file) return res.status(404).json({ error: '文件不存在' });
+    res.json(file);
+  } catch (error: any) {
+    console.error('Get file error:', error.message);
+    res.status(500).json({ error: '获取文件信息失败' });
+  }
 });
 
+// Delete file
 router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
-  const file = await prisma.file.findUnique({ where: { id: req.params.id } });
-  if (!file) return res.status(404).json({ error: '文件不存在' });
-  const filePath = path.join(uploadDir, file.filename);
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  await prisma.file.delete({ where: { id: req.params.id } });
-  res.json({ message: '文件已删除' });
+  try {
+    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+    if (!file) return res.status(404).json({ error: '文件不存在' });
+    const filePath = path.join(uploadDir, file.filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    await prisma.file.delete({ where: { id: req.params.id } });
+    res.json({ message: '文件已删除' });
+  } catch (error: any) {
+    console.error('Delete file error:', error.message);
+    res.status(500).json({ error: '删除文件失败' });
+  }
 });
 
 export default router;
