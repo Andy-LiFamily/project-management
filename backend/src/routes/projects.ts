@@ -8,6 +8,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   const projects = await prisma.project.findMany({
     include: {
       createdBy: { select: { username: true } },
+      vendor: { select: { id: true, name: true } },
       features: { select: { id: true, status: true } }
     },
     orderBy: { createdAt: 'desc' }
@@ -16,12 +17,13 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
-  const { name, client, manager, startDate, dueDate, remark } = req.body;
+  const { name, client, manager, vendorId, startDate, dueDate, remark } = req.body;
   const project = await prisma.project.create({
     data: {
       name,
       client: client || '内部',
       manager,
+      vendorId: vendorId || null,
       startDate: new Date(startDate),
       dueDate: new Date(dueDate),
       remark,
@@ -36,6 +38,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     where: { id: req.params.id },
     include: {
       createdBy: { select: { username: true } },
+      vendor: { select: { id: true, name: true } },
       features: {
         include: {
           tasks: true
@@ -48,13 +51,14 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
-  const { name, client, manager, startDate, dueDate, finishDate, status, summary, remark } = req.body;
+  const { name, client, manager, vendorId, startDate, dueDate, finishDate, status, summary, remark } = req.body;
   const data: any = { name, client, manager, remark };
   if (startDate) data.startDate = new Date(startDate);
   if (dueDate) data.dueDate = new Date(dueDate);
   if (finishDate) data.finishDate = new Date(finishDate);
   if (status) data.status = status;
   if (summary !== undefined) data.summary = summary;
+  if (vendorId !== undefined) data.vendorId = vendorId || null;
   const project = await prisma.project.update({ where: { id: req.params.id }, data });
   res.json(project);
 });

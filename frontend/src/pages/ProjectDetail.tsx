@@ -15,8 +15,10 @@ export default function ProjectDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [summary, setSummary] = useState('');
   const [summaryError, setSummaryError] = useState('');
+  const [vendors, setVendors] = useState<any[]>([]);
 
   useEffect(() => { loadProject(); }, [id]);
+  useEffect(() => { api.get('/api/vendors').then(r => setVendors(r.data)); }, []);
 
   const loadProject = () => api.get(`/api/projects/${id}`).then(r => { setProject(r.data); setSummary(r.data.summary || ''); });
 
@@ -27,6 +29,7 @@ export default function ProjectDetail() {
       name: fd.get('name'),
       client: fd.get('client'),
       manager: fd.get('manager'),
+      vendorId: fd.get('vendorId') || null,
       startDate: fd.get('startDate'),
       dueDate: fd.get('dueDate'),
       status: fd.get('status'),
@@ -82,6 +85,7 @@ export default function ProjectDetail() {
         <div className="detail-meta">
           <div className="item"><div className="label">客户/内部</div><div className="value">{project.client}</div></div>
           <div className="item"><div className="label">项目负责人</div><div className="value">{project.manager || '-'}</div></div>
+          <div className="item"><div className="label">供应商</div><div className="value">{project.vendor?.name || '-'}</div></div>
           <div className="item"><div className="label">启动日期</div><div className="value">{new Date(project.startDate).toLocaleDateString('zh-CN')}</div></div>
           <div className="item"><div className="label">计划完成</div><div className="value">{new Date(project.dueDate).toLocaleDateString('zh-CN')}</div></div>
           {project.finishDate && <div className="item"><div className="label">实际完成</div><div className="value">{new Date(project.finishDate).toLocaleDateString('zh-CN')}</div></div>}
@@ -148,6 +152,14 @@ export default function ProjectDetail() {
           <div className="form-row">
             <div className="form-group"><label>客户/内部</label><input name="client" defaultValue={project.client} /></div>
             <div className="form-group"><label>项目负责人</label><input name="manager" defaultValue={project.manager || ''} /></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>供应商</label>
+              <select name="vendorId" defaultValue={project.vendorId || ''}>
+                <option value="">-- 无 --</option>
+                {vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+            </div>
           </div>
           <div className="form-row">
             <div className="form-group"><label>启动日期 *</label><input name="startDate" type="date" defaultValue={project.startDate?.split('T')[0]} required /></div>

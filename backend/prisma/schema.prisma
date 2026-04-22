@@ -72,6 +72,7 @@ model Project {
   name        String
   client      String        @default("内部")
   manager     String?
+  vendorId    String?
   startDate   DateTime
   dueDate     DateTime
   finishDate  DateTime?
@@ -84,6 +85,7 @@ model Project {
 
   // Relations
   createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
+  vendor      Vendor?    @relation(fields: [vendorId], references: [id])
   features    Feature[]
   tasks       Task[]
 }
