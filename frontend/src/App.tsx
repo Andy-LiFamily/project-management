@@ -16,10 +16,10 @@ function Navbar({ user, onLogout }: { user: any; onLogout: () => void }) {
     <nav className="navbar">
       <h1>📋 项目管理系统</h1>
       <div className="nav-links">
-        <Link to="/" className={location.pathname === '/' ? 'active' : ''}>首页</Link>
-        <Link to="/projects" className={location.pathname.startsWith('/projects') ? 'active' : ''}>项目</Link>
-        <Link to="/vendors" className={location.pathname === '/vendors' ? 'active' : ''}>供应商</Link>
-        {isAdmin && <Link to="/users" className={location.pathname === '/users' ? 'active' : ''}>用户管理</Link>}
+        <Link to="/" className={location.pathname === '/' ? 'active' : ''}>🏠 首页</Link>
+        <Link to="/projects" className={location.pathname.startsWith('/projects') || location.pathname.startsWith('/features') ? 'active' : ''}>📁 项目</Link>
+        <Link to="/vendors" className={location.pathname === '/vendors' ? 'active' : ''}>🏢 供应商</Link>
+        {isAdmin && <Link to="/users" className={location.pathname === '/users' ? 'active' : ''}>👤 用户管理</Link>}
       </div>
       <div className="nav-right">
         <span style={{ fontSize: '0.85rem' }}>{user?.username}</span>
