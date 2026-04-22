@@ -172,7 +172,7 @@ export default function FeatureDetail() {
           </div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>工作内容</th><th>负责人</th><th>目标日期</th><th>供应商</th><th>进度</th><th>状态</th><th>操作</th></tr></thead>
+              <thead><tr><th>工作内容</th><th>负责人</th><th>目标日期</th><th>供应商</th><th>状态</th><th>操作</th></tr></thead>
               <tbody>
                 {feature.tasks?.map((t: any) => (
                   <tr key={t.id}>
@@ -180,19 +180,13 @@ export default function FeatureDetail() {
                     <td>{t.manager || '-'}</td>
                     <td>{new Date(t.targetDate).toLocaleDateString('zh-CN')}</td>
                     <td>{t.vendor?.name || '-'}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div className="progress-bar" style={{ width: '80px' }}><div className="fill" style={{ width: `${t.progress}%` }} /></div>
-                        <span style={{ fontSize: '0.8rem' }}>{t.progress}%</span>
-                      </div>
-                    </td>
                     <td><span className={`badge ${t.status === 'DELAYED' ? 'badge-delayed' : t.status === 'COMPLETED' ? 'badge-completed' : t.status === 'IN_PROGRESS' ? 'badge-in-progress' : t.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[t.status]}</span></td>
                     <td>
                       <button className="btn btn-warning" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setShowEditTask(t)}>编辑</button>
                     </td>
                   </tr>
                 ))}
-                {(!feature.tasks || feature.tasks.length === 0) && <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>暂无任务</td></tr>}
+                {(!feature.tasks || feature.tasks.length === 0) && <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>暂无任务</td></tr>}
               </tbody>
             </table>
           </div>
