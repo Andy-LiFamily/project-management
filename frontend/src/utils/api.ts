@@ -26,16 +26,17 @@ export const api = {
   },
   post: async (url: string, data?: any, opts?: ApiOptions) => {
     const token = localStorage.getItem('token');
+    const isFormData = data instanceof FormData;
     const res = await fetch(API_URL + url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(opts?.headers || {})
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
       credentials: opts?.credentials ? 'include' : undefined
-    } as any);
+    });
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -47,16 +48,17 @@ export const api = {
   },
   put: async (url: string, data?: any, opts?: ApiOptions) => {
     const token = localStorage.getItem('token');
+    const isFormData = data instanceof FormData;
     const res = await fetch(API_URL + url, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(opts?.headers || {})
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
       credentials: opts?.credentials ? 'include' : undefined
-    } as any);
+    });
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -76,7 +78,7 @@ export const api = {
         ...(opts?.headers || {})
       },
       credentials: opts?.credentials ? 'include' : undefined
-    } as any);
+    });
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
