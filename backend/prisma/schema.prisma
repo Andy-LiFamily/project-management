@@ -76,6 +76,7 @@ model Project {
   dueDate     DateTime
   finishDate  DateTime?
   status      ProjectStatus @default(NOT_STARTED)
+  summary     String?
   remark      String?
   createdById String
   createdAt   DateTime      @default(now())

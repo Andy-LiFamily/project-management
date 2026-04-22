@@ -13,10 +13,12 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<any>(null);
   const [showFeature, setShowFeature] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [summaryError, setSummaryError] = useState('');
 
   useEffect(() => { loadProject(); }, [id]);
 
-  const loadProject = () => api.get(`/api/projects/${id}`).then(r => setProject(r.data));
+  const loadProject = () => api.get(`/api/projects/${id}`).then(r => { setProject(r.data); setSummary(r.data.summary || ''); });
 
   const updateProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,6 +33,18 @@ export default function ProjectDetail() {
       remark: fd.get('remark')
     });
     setShowEdit(false);
+    loadProject();
+  };
+
+  const saveSummary = async () => {
+    await api.put(`/api/projects/${id}`, { summary });
+    loadProject();
+  };
+
+  const markComplete = async () => {
+    if (!summary.trim()) { setSummaryError('请先填写完成总结'); return; }
+    setSummaryError('');
+    await api.put(`/api/projects/${id}/complete`, { summary, status: 'COMPLETED' });
     loadProject();
   };
 
@@ -74,6 +88,16 @@ export default function ProjectDetail() {
         </div>
 
         {project.remark && <div className="card"><strong>备注：</strong>{project.remark}</div>}
+
+        <div className="card">
+          <div className="card-header"><h2>📝 完成总结</h2></div>
+          <textarea value={summary} onChange={e => setSummary(e.target.value)} rows={4} placeholder="请填写完成总结..." style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+          {summaryError && <div style={{ color: 'var(--danger)', marginTop: '0.5rem', fontSize: '0.85rem' }}>{summaryError}</div>}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+            <button className="btn btn-primary" onClick={saveSummary}>💾 保存</button>
+            <button className="btn btn-success" onClick={markComplete} disabled={project.status === 'COMPLETED'}>✅ 开发完成</button>
+          </div>
+        </div>
 
         <div className="card">
           <div className="card-header">
