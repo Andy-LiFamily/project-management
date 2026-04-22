@@ -4,7 +4,7 @@ import { Modal } from './Projects';
 import { api } from '../utils/api';
 
 const statusMap: Record<string, string> = {
-  NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成'
+  NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成', TERMINATED: '已终止'
 };
 const branchMap: Record<string, string> = { SOFTWARE: '软件', HARDWARE: '硬件' };
 
@@ -12,10 +12,27 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const [project, setProject] = useState<any>(null);
   const [showFeature, setShowFeature] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => { loadProject(); }, [id]);
 
   const loadProject = () => api.get(`/api/projects/${id}`).then(r => setProject(r.data));
+
+  const updateProject = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    await api.put(`/api/projects/${id}`, {
+      name: fd.get('name'),
+      client: fd.get('client'),
+      manager: fd.get('manager'),
+      startDate: fd.get('startDate'),
+      dueDate: fd.get('dueDate'),
+      status: fd.get('status'),
+      remark: fd.get('remark')
+    });
+    setShowEdit(false);
+    loadProject();
+  };
 
   const createFeature = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,9 +57,12 @@ export default function ProjectDetail() {
         <div className="detail-header">
           <div>
             <h2>📁 {project.name}</h2>
-            <span className={`badge ${project.status === 'DELAYED' ? 'badge-delayed' : project.status === 'COMPLETED' ? 'badge-completed' : project.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-not-started'}`}>{statusMap[project.status]}</span>
+            <span className={`badge ${project.status === 'DELAYED' ? 'badge-delayed' : project.status === 'COMPLETED' ? 'badge-completed' : project.status === 'IN_PROGRESS' ? 'badge-in-progress' : project.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[project.status]}</span>
           </div>
-          <Link to="/projects" className="btn btn-grey">← 返回列表</Link>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn-warning" onClick={() => setShowEdit(true)}>编辑</button>
+            <Link to="/projects" className="btn btn-grey">← 返回列表</Link>
+          </div>
         </div>
 
         <div className="detail-meta">
@@ -71,7 +91,7 @@ export default function ProjectDetail() {
                     <td>{f.manager || '-'}</td>
                     <td>{new Date(f.plannedStart).toLocaleDateString('zh-CN')}</td>
                     <td>{new Date(f.plannedEnd).toLocaleDateString('zh-CN')}</td>
-                    <td><span className={`badge ${f.status === 'DELAYED' ? 'badge-delayed' : f.status === 'COMPLETED' ? 'badge-completed' : f.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-not-started'}`}>{statusMap[f.status]}</span></td>
+                    <td><span className={`badge ${f.status === 'DELAYED' ? 'badge-delayed' : f.status === 'COMPLETED' ? 'badge-completed' : f.status === 'IN_PROGRESS' ? 'badge-in-progress' : f.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[f.status]}</span></td>
                     <td><Link to={`/features/${f.id}`} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>查看详情</Link></td>
                   </tr>
                 ))}
@@ -95,6 +115,33 @@ export default function ProjectDetail() {
             <div className="form-group"><label>计划完成 *</label><input name="plannedEnd" type="date" required /></div>
           </div>
           <div className="modal-footer"><button type="button" className="btn btn-grey" onClick={() => setShowFeature(false)}>取消</button><button type="submit" className="btn btn-primary">创建</button></div>
+        </form>
+      </Modal>}
+
+      {showEdit && <Modal title="编辑项目" onClose={() => setShowEdit(false)}>
+        <form onSubmit={updateProject}>
+          <div className="form-group"><label>项目名称 *</label><input name="name" defaultValue={project.name} required /></div>
+          <div className="form-row">
+            <div className="form-group"><label>客户/内部</label><input name="client" defaultValue={project.client} /></div>
+            <div className="form-group"><label>项目负责人</label><input name="manager" defaultValue={project.manager || ''} /></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>启动日期 *</label><input name="startDate" type="date" defaultValue={project.startDate?.split('T')[0]} required /></div>
+            <div className="form-group"><label>计划完成日期 *</label><input name="dueDate" type="date" defaultValue={project.dueDate?.split('T')[0]} required /></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>状态 *</label>
+              <select name="status" defaultValue={project.status} required>
+                <option value="NOT_STARTED">未开展</option>
+                <option value="IN_PROGRESS">进行中</option>
+                <option value="DELAYED">延误</option>
+                <option value="COMPLETED">已完成</option>
+                <option value="TERMINATED">已终止</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-group"><label>备注</label><textarea name="remark" rows={3} defaultValue={project.remark || ''} /></div>
+          <div className="modal-footer"><button type="button" className="btn btn-grey" onClick={() => setShowEdit(false)}>取消</button><button type="submit" className="btn btn-primary">保存</button></div>
         </form>
       </Modal>}
     </div>

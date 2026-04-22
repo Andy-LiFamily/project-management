@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
+import { Modal } from './Projects';
 
 const statusMap: Record<string, string> = {
-  NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成'
+  NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成', TERMINATED: '已终止'
 };
 
 export default function Projects() {
@@ -52,7 +53,7 @@ export default function Projects() {
                     <td>{p.manager || '-'}</td>
                     <td>{new Date(p.startDate).toLocaleDateString('zh-CN')}</td>
                     <td>{new Date(p.dueDate).toLocaleDateString('zh-CN')}</td>
-                    <td><span className={`badge ${p.status === 'DELAYED' ? 'badge-delayed' : p.status === 'COMPLETED' ? 'badge-completed' : p.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-not-started'}`}>{statusMap[p.status]}</span></td>
+                    <td><span className={`badge ${p.status === 'DELAYED' ? 'badge-delayed' : p.status === 'COMPLETED' ? 'badge-completed' : p.status === 'IN_PROGRESS' ? 'badge-in-progress' : p.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[p.status]}</span></td>
                     <td><Link to={`/projects/${p.id}`} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>查看</Link></td>
                   </tr>
                 ))}
@@ -78,14 +79,6 @@ export default function Projects() {
           <div className="modal-footer"><button type="button" className="btn btn-grey" onClick={() => setShowModal(false)}>取消</button><button type="submit" className="btn btn-primary">创建</button></div>
         </form>
       </Modal>}
-    </div>
-  );
-}
-
-export function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal"><div className="modal-header"><h3>{title}</h3><button className="modal-close" onClick={onClose}>×</button></div>{children}</div>
     </div>
   );
 }

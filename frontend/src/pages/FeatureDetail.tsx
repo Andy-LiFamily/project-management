@@ -4,7 +4,7 @@ import { api } from '../utils/api';
 import { Modal } from './Projects';
 
 const statusMap: Record<string, string> = {
-  NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成'
+  NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成', TERMINATED: '已终止'
 };
 const branchMap: Record<string, string> = { SOFTWARE: '软件', HARDWARE: '硬件' };
 
@@ -124,7 +124,7 @@ export default function FeatureDetail() {
         <div className="detail-header">
           <div>
             <h2>📋 {feature.name}</h2>
-            <span style={{ marginLeft: '0.5rem' }} className={`badge ${feature.status === 'DELAYED' ? 'badge-delayed' : feature.status === 'COMPLETED' ? 'badge-completed' : feature.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-not-started'}`}>{statusMap[feature.status]}</span>
+            <span style={{ marginLeft: '0.5rem' }} className={`badge ${feature.status === 'DELAYED' ? 'badge-delayed' : feature.status === 'COMPLETED' ? 'badge-completed' : feature.status === 'IN_PROGRESS' ? 'badge-in-progress' : feature.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[feature.status]}</span>
             <span style={{ marginLeft: '0.5rem' }} className="badge badge-in-progress">{branchMap[feature.branchType]}</span>
           </div>
           <Link to={`/projects/${feature.projectId}`} className="btn btn-grey">← 返回项目</Link>
@@ -186,7 +186,7 @@ export default function FeatureDetail() {
                         <span style={{ fontSize: '0.8rem' }}>{t.progress}%</span>
                       </div>
                     </td>
-                    <td><span className={`badge ${t.status === 'DELAYED' ? 'badge-delayed' : t.status === 'COMPLETED' ? 'badge-completed' : t.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-not-started'}`}>{statusMap[t.status]}</span></td>
+                    <td><span className={`badge ${t.status === 'DELAYED' ? 'badge-delayed' : t.status === 'COMPLETED' ? 'badge-completed' : t.status === 'IN_PROGRESS' ? 'badge-in-progress' : t.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[t.status]}</span></td>
                     <td>
                       <button className="btn btn-warning" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setShowEditTask(t)}>编辑</button>
                     </td>
