@@ -12,6 +12,7 @@ export default function FeatureDetail() {
   const { id } = useParams();
   const [feature, setFeature] = useState<any>(null);
   const [showTask, setShowTask] = useState(false);
+  const [showEditTask, setShowEditTask] = useState<any>(null);
   const [summary, setSummary] = useState('');
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -35,19 +36,29 @@ export default function FeatureDetail() {
   const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    let success = 0;
+    let failed = 0;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const formData = new FormData();
       formData.append('file', file);
       formData.append('entityType', 'FEATURE');
       formData.append('entityId', id!);
-      try { await api.post('/api/files', formData); } catch (err) { console.error('Upload failed', err); }
+      try {
+        await api.post('/api/files', formData);
+        success++;
+      } catch (err) {
+        console.error('Upload failed', file.name, err);
+        failed++;
+      }
     }
     if (fileRef.current) fileRef.current.value = '';
+    if (failed > 0) alert(`上傳完成：成功 ${success} 個，失敗 ${failed} 個`);
     loadFeature();
   };
 
   const deleteFile = async (fileId: string) => {
+    if (!confirm('确定删除该文件？')) return;
     await api.delete(`/api/files/${fileId}`);
     loadFeature();
   };
@@ -56,6 +67,7 @@ export default function FeatureDetail() {
     try {
       const res = await api.get(`/api/files/${file.id}/download`);
       const { data, mimeType, filename } = res.data;
+      if (!data) { alert('文件數據無效'); return; }
       const binary = atob(data);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -70,6 +82,21 @@ export default function FeatureDetail() {
       console.error('Download failed', err);
       alert('文件下載失敗');
     }
+  };
+
+  const updateTask = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    await api.put(`/api/tasks/${showEditTask.id}`, {
+      workContent: fd.get('workContent'),
+      manager: fd.get('manager'),
+      vendorId: fd.get('vendorId') || null,
+      status: fd.get('status'),
+      progress: parseInt(fd.get('progress') as string) || 0,
+      remark: fd.get('remark')
+    });
+    setShowEditTask(null);
+    loadFeature();
   };
 
   const createTask = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -145,7 +172,7 @@ export default function FeatureDetail() {
           </div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>工作内容</th><th>负责人</th><th>目标日期</th><th>供应商</th><th>进度</th><th>状态</th></tr></thead>
+              <thead><tr><th>工作内容</th><th>负责人</th><th>目标日期</th><th>供应商</th><th>进度</th><th>状态</th><th>操作</th></tr></thead>
               <tbody>
                 {feature.tasks?.map((t: any) => (
                   <tr key={t.id}>
@@ -160,56 +187,78 @@ export default function FeatureDetail() {
                       </div>
                     </td>
                     <td><span className={`badge ${t.status === 'DELAYED' ? 'badge-delayed' : t.status === 'COMPLETED' ? 'badge-completed' : t.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-not-started'}`}>{statusMap[t.status]}</span></td>
+                    <td>
+                      <button className="btn btn-warning" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setShowEditTask(t)}>编辑</button>
+                    </td>
                   </tr>
                 ))}
-                {(!feature.tasks || feature.tasks.length === 0) && <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>暂无任务</td></tr>}
+                {(!feature.tasks || feature.tasks.length === 0) && <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>暂无任务</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {showTask && <TaskModal feature={feature} onClose={() => setShowTask(false)} onCreated={loadFeature} />}
+      {showTask && <TaskModal vendors={[]} featureId={id} onClose={() => setShowTask(false)} onCreated={loadFeature} mode="create" />}
+      {showEditTask && <TaskModal vendors={[]} featureId={id} task={showEditTask} onClose={() => setShowEditTask(null)} onCreated={loadFeature} mode="edit" />}
     </div>
   );
 }
 
-function TaskModal({ feature, onClose, onCreated }: { feature: any; onClose: () => void; onCreated: () => void }) {
-  const [vendors, setVendors] = useState<any[]>([]);
+function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, mode }: any) {
+  const [vendors, setVendors] = useState(allVendors.length > 0 ? allVendors : []);
 
-  useEffect(() => { api.get('/api/vendors').then(r => setVendors(r.data)); }, []);
+  useEffect(() => {
+    if (allVendors.length === 0) api.get('/api/vendors').then(r => setVendors(r.data));
+  }, []);
 
-  const create = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    await api.post(`/api/tasks/feature/${feature.id}`, {
-      workContent: fd.get('workContent'),
-      targetDate: fd.get('targetDate'),
-      manager: fd.get('manager'),
-      vendorId: fd.get('vendorId') || null,
-      status: fd.get('status') || 'NOT_STARTED',
-      remark: fd.get('remark')
-    });
+
+    if (mode === 'edit') {
+      await api.put(`/api/tasks/${task.id}`, {
+        workContent: fd.get('workContent'),
+        manager: fd.get('manager'),
+        vendorId: fd.get('vendorId') || null,
+        status: fd.get('status'),
+        progress: parseInt(fd.get('progress') as string) || 0,
+        remark: fd.get('remark')
+      });
+    } else {
+      await api.post(`/api/tasks/feature/${featureId}`, {
+        workContent: fd.get('workContent'),
+        targetDate: fd.get('targetDate'),
+        manager: fd.get('manager'),
+        vendorId: fd.get('vendorId') || null,
+        status: fd.get('status') || 'NOT_STARTED',
+        remark: fd.get('remark')
+      });
+    }
     onCreated();
     onClose();
   };
 
   return (
-    <Modal title="新建任务" onClose={onClose}>
-      <form onSubmit={create}>
-        <div className="form-group"><label>工作内容 *</label><textarea name="workContent" rows={3} required placeholder="请详细描述任务内容" /></div>
+    <Modal title={mode === 'edit' ? '编辑任务' : '新建任务'} onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group"><label>工作内容 *</label><textarea name="workContent" rows={3} required defaultValue={task?.workContent || ''} placeholder="请详细描述任务内容" /></div>
+        {mode === 'create' && <div className="form-group"><label>目标达成日期 *</label><input name="targetDate" type="date" required defaultValue={task?.targetDate?.split('T')[0] || ''} /></div>}
         <div className="form-row">
-          <div className="form-group"><label>负责人</label><input name="manager" /></div>
-          <div className="form-group"><label>目标达成日期 *</label><input name="targetDate" type="date" required /></div>
-        </div>
-        <div className="form-row">
+          <div className="form-group"><label>负责人</label><input name="manager" defaultValue={task?.manager || ''} /></div>
           <div className="form-group"><label>供应商</label>
-            <select name="vendorId"><option value="">-- 无 --</option>
+            <select name="vendorId" defaultValue={task?.vendorId || ''}>
+              <option value="">-- 无 --</option>
               {vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>进度</label>
+            <input name="progress" type="number" min="0" max="100" defaultValue={task?.progress || 0} />
+          </div>
           <div className="form-group"><label>状态 *</label>
-            <select name="status" required>
+            <select name="status" required defaultValue={task?.status || 'NOT_STARTED'}>
               <option value="NOT_STARTED">未开展</option>
               <option value="IN_PROGRESS">进行中</option>
               <option value="DELAYED">延误</option>
@@ -217,8 +266,8 @@ function TaskModal({ feature, onClose, onCreated }: { feature: any; onClose: () 
             </select>
           </div>
         </div>
-        <div className="form-group"><label>备注</label><input name="remark" /></div>
-        <div className="modal-footer"><button type="button" className="btn btn-grey" onClick={onClose}>取消</button><button type="submit" className="btn btn-primary">创建</button></div>
+        <div className="form-group"><label>备注</label><input name="remark" defaultValue={task?.remark || ''} /></div>
+        <div className="modal-footer"><button type="button" className="btn btn-grey" onClick={onClose}>取消</button><button type="submit" className="btn btn-primary">{mode === 'edit' ? '保存' : '创建'}</button></div>
       </form>
     </Modal>
   );

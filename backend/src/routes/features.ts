@@ -46,7 +46,29 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     }
   });
   if (!feature) return res.status(404).json({ error: '功能不存在' });
-  res.json(feature);
+
+  // Fetch files for this feature
+  const files = await prisma.file.findMany({
+    where: { entityType: 'FEATURE', entityId: req.params.id }
+  });
+
+  // Also fetch files for all tasks under this feature
+  const taskIds = feature.tasks.map(t => t.id);
+  const taskFiles = taskIds.length > 0 ? await prisma.file.findMany({
+    where: { entityType: 'TASK', entityId: { in: taskIds } }
+  }) : [];
+
+  // Attach files to their respective tasks
+  const tasksWithFiles = feature.tasks.map(task => ({
+    ...task,
+    files: taskFiles.filter(f => f.entityId === task.id)
+  }));
+
+  res.json({
+    ...feature,
+    tasks: tasksWithFiles,
+    files: files
+  });
 });
 
 router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
