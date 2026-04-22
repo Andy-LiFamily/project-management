@@ -9,7 +9,7 @@ COPY backend/package*.json ./
 RUN npm install
 
 COPY backend/ .
-RUN npm run db:generate
+RUN npx prisma generate
 RUN tsc
 
 EXPOSE 8080
