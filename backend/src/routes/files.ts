@@ -72,26 +72,26 @@ router.get('/:entityType/:entityId', authenticate, async (req: AuthRequest, res:
 // IMPORTANT: route with download BEFORE /:id to avoid matching issue
 router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    console.log(`Download request for file ID: ${req.params.id}`);
+    console.log(`[DOWNLOAD] Request for file ID: ${req.params.id}`);
     const file = await prisma.file.findUnique({ where: { id: req.params.id } });
     if (!file) {
-      console.log('File not found in DB');
+      console.log('[DOWNLOAD] File not found in DB');
       return res.status(404).json({ error: '文件不存在' });
     }
-    console.log(`File found: ${file.originalName}, path: ${file.path}`);
+    console.log(`[DOWNLOAD] File found in DB: ${file.originalName}, path: ${file.path}, filename: ${file.filename}`);
 
-    const filePath = path.join(uploadDir, file.filename);
-    console.log(`Looking for file at: ${filePath}`);
+    const resolvedPath = path.join(uploadDir, file.filename);
+    console.log(`[DOWNLOAD] Resolved path: ${resolvedPath}, exists: ${fs.existsSync(resolvedPath)}`);
 
-    if (!fs.existsSync(filePath)) {
-      console.log('File does not exist on disk');
+    if (!fs.existsSync(resolvedPath)) {
+      console.log('[DOWNLOAD] File does not exist on disk at resolved path');
       return res.status(404).json({ error: '文件未找到' });
     }
 
-    const buffer = fs.readFileSync(filePath);
-    const base64 = buffer.toString('base64');
-    console.log(`File read successfully, size: ${buffer.length}`);
+    const buffer = fs.readFileSync(resolvedPath);
+    console.log(`[DOWNLOAD] File read successfully, size: ${buffer.length}`);
 
+    const base64 = buffer.toString('base64');
     res.json({
       filename: file.originalName,
       mimeType: file.mimeType,
@@ -99,7 +99,7 @@ router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response
       data: base64
     });
   } catch (error: any) {
-    console.error('Download error:', error);
+    console.error('[DOWNLOAD] Error:', error.stack || error);
     res.status(500).json({ error: '下载失败: ' + (error.message || '未知错误') });
   }
 });
