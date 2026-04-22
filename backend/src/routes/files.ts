@@ -1,7 +1,8 @@
 import { Router, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import { randomUUID } from 'crypto';
 import { prisma } from '../utils/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 
@@ -9,8 +10,7 @@ const router = Router();
 
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
 
-// Ensure upload directory exists
-const fs = await import('fs');
+// Ensure upload directory exists at startup
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
+    cb(null, `${randomUUID()}${ext}`);
   }
 });
 
@@ -36,9 +36,11 @@ const upload = multer({
 
 router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, res: Response) => {
   try {
+    console.log('POST /api/files called');
+    console.log('req.file:', req.file);
+    console.log('req.body:', req.body);
     if (!req.file) return res.status(400).json({ error: '请选择文件' });
     const { entityType, entityId } = req.body;
-    console.log('File uploaded:', req.file);
     const file = await prisma.file.create({
       data: {
         entityType,
@@ -51,10 +53,11 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
         uploaderId: req.user!.id
       }
     });
+    console.log('File record created:', file.id);
     res.json(file);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload error:', error);
-    res.status(500).json({ error: '上传失败' });
+    res.status(500).json({ error: '上传失败: ' + (error.message || '未知错误') });
   }
 });
 
@@ -66,15 +69,13 @@ router.get('/:entityType/:entityId', authenticate, async (req: AuthRequest, res:
   res.json(files);
 });
 
+// IMPORTANT: route with download BEFORE /:id to avoid matching issue
 router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const file = await prisma.file.findUnique({ where: { id: req.params.id } });
     if (!file) return res.status(404).json({ error: '文件不存在' });
 
-    const fs = await import('fs');
-    const pathMod = await import('path');
-    const uploadDir = process.env.UPLOAD_DIR || './uploads';
-    const filePath = pathMod.join(uploadDir, file.filename);
+    const filePath = path.join(uploadDir, file.filename);
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: '文件未找到' });
@@ -89,8 +90,9 @@ router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response
       size: file.size,
       data: base64
     });
-  } catch (error) {
-    res.status(500).json({ error: '下载失败' });
+  } catch (error: any) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: '下载失败: ' + (error.message || '未知错误') });
   }
 });
 
@@ -103,10 +105,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   const file = await prisma.file.findUnique({ where: { id: req.params.id } });
   if (!file) return res.status(404).json({ error: '文件不存在' });
-  const fs = await import('fs');
-  const pathMod = await import('path');
-  const uploadDir = process.env.UPLOAD_DIR || './uploads';
-  const filePath = pathMod.join(uploadDir, file.filename);
+  const filePath = path.join(uploadDir, file.filename);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   await prisma.file.delete({ where: { id: req.params.id } });
   res.json({ message: '文件已删除' });
