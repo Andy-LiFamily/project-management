@@ -208,6 +208,7 @@ export default function FeatureDetail() {
 function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, mode }: any) {
   const [vendors, setVendors] = useState(allVendors.length > 0 ? allVendors : []);
   const [selectedStatus, setSelectedStatus] = useState(task?.status || 'NOT_STARTED');
+  const [progress, setProgress] = useState(task?.progress ?? (task?.status === 'IN_PROGRESS' ? 25 : task?.status === 'COMPLETED' ? 100 : 0));
 
   useEffect(() => {
     if (allVendors.length === 0) api.get('/api/vendors').then(r => setVendors(r.data));
@@ -215,11 +216,10 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
 
   const handleStatusChange = (status: string, form: HTMLFormElement) => {
     setSelectedStatus(status);
-    const progressInput = form.elements.namedItem('progress') as HTMLInputElement;
-    if (!progressInput) return;
-    if (status === 'NOT_STARTED') progressInput.value = '0';
-    else if (status === 'IN_PROGRESS') progressInput.value = '25';
-    else if (status === 'COMPLETED') progressInput.value = '100';
+    if (status === 'NOT_STARTED') setProgress(0);
+    else if (status === 'IN_PROGRESS') setProgress(25);
+    else if (status === 'COMPLETED') setProgress(100);
+    // TERMINATED: keep current progress
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -265,10 +265,10 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
         </div>
         <div className="form-row">
           <div className="form-group"><label>进度</label>
-            <input name="progress" type="number" min="0" max="100" defaultValue={task?.progress || (task?.status === 'IN_PROGRESS' ? 25 : task?.status === 'COMPLETED' ? 100 : 0)} readOnly={selectedStatus !== 'TERMINATED'} />
+            <input name="progress" type="number" min="0" max="100" value={progress} onChange={e => setProgress(parseInt(e.target.value) || 0)} readOnly={selectedStatus !== 'TERMINATED'} />
           </div>
           <div className="form-group"><label>状态 *</label>
-            <select name="status" required defaultValue={task?.status || 'NOT_STARTED'} onChange={e => handleStatusChange(e.target.value, e.currentTarget.form!)}>
+            <select name="status" required defaultValue={task?.status || 'NOT_STARTED'} onChange={e => handleStatusChange(e.target.value, e.target.form!)}>
               <option value="NOT_STARTED">未开展</option>
               <option value="IN_PROGRESS">进行中</option>
               <option value="DELAYED">延误</option>
