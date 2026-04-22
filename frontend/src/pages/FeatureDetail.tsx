@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Modal } from './Projects';
 import { api } from '../utils/api';
+import { Modal } from './Projects';
 
 const statusMap: Record<string, string> = {
   NOT_STARTED: '未开展', IN_PROGRESS: '进行中', DELAYED: '延误', COMPLETED: '已完成'
@@ -33,13 +33,16 @@ export default function FeatureDetail() {
   };
 
   const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('entityType', 'FEATURE');
-    formData.append('entityId', id!);
-    await api.post('/api/files', formData);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('entityType', 'FEATURE');
+      formData.append('entityId', id!);
+      try { await api.post('/api/files', formData); } catch (err) { console.error('Upload failed', err); }
+    }
     if (fileRef.current) fileRef.current.value = '';
     loadFeature();
   };
@@ -57,6 +60,7 @@ export default function FeatureDetail() {
       targetDate: fd.get('targetDate'),
       manager: fd.get('manager'),
       vendorId: fd.get('vendorId') || null,
+      status: fd.get('status') || 'NOT_STARTED',
       remark: fd.get('remark')
     });
     setShowTask(false);
@@ -65,7 +69,8 @@ export default function FeatureDetail() {
 
   if (!feature) return <div className="main-content"><div className="container" style={{ padding: '2rem', textAlign: 'center' }}>加载中...</div></div>;
 
-  const vendors = feature.tasks?.map((t: any) => t.vendor).filter(Boolean) || [];
+  const featureFiles = (feature.files || []).filter((f: any) => f.entityType === 'FEATURE');
+  const taskFiles = (feature.tasks || []).flatMap((t: any) => (t.files || []).filter((f: any) => f.entityType === 'TASK'));
 
   return (
     <div className="main-content">
@@ -87,7 +92,6 @@ export default function FeatureDetail() {
           {feature.actualEnd && <div className="item"><div className="label">实际完成</div><div className="value">{new Date(feature.actualEnd).toLocaleDateString('zh-CN')}</div></div>}
         </div>
 
-        {/* Completion Summary */}
         <div className="card">
           <div className="card-header"><h2>📝 完成总结</h2></div>
           <textarea value={summary} onChange={e => setSummary(e.target.value)} rows={4} placeholder="请填写完成总结..." style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem', fontFamily: 'inherit' }} />
@@ -98,25 +102,23 @@ export default function FeatureDetail() {
           </div>
         </div>
 
-        {/* Files */}
         <div className="card">
           <div className="card-header"><h2>📎 规划文件</h2></div>
           <div style={{ marginBottom: '1rem' }}>
-            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" onChange={uploadFile} />
+            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" multiple onChange={uploadFile} />
           </div>
           <ul className="file-list">
-            {feature.files?.filter((f: any) => f.entityType === 'FEATURE').map((f: any) => (
+            {featureFiles.map((f: any) => (
               <li key={f.id}>
-                <span>{f.originalName}</span>
+                <a href={`https://projectman-backend.zeabur.app/uploads/${f.filename}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>{f.originalName}</a>
                 <span style={{ color: '#999', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{(f.size / 1024).toFixed(1)} KB</span>
                 <button onClick={() => deleteFile(f.id)}>×</button>
               </li>
             ))}
-            {(!feature.files || feature.files.length === 0) && <li style={{ color: '#999' }}>暂无文件</li>}
+            {featureFiles.length === 0 && <li style={{ color: '#999' }}>暂无文件</li>}
           </ul>
         </div>
 
-        {/* Tasks */}
         <div className="card">
           <div className="card-header">
             <h2>📌 分工任务 ({feature.tasks?.length || 0})</h2>
@@ -154,6 +156,10 @@ export default function FeatureDetail() {
 }
 
 function TaskModal({ feature, onClose, onCreated }: { feature: any; onClose: () => void; onCreated: () => void }) {
+  const [vendors, setVendors] = useState<any[]>([]);
+
+  useEffect(() => { api.get('/api/vendors').then(r => setVendors(r.data)); }, []);
+
   const create = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -162,6 +168,7 @@ function TaskModal({ feature, onClose, onCreated }: { feature: any; onClose: () 
       targetDate: fd.get('targetDate'),
       manager: fd.get('manager'),
       vendorId: fd.get('vendorId') || null,
+      status: fd.get('status') || 'NOT_STARTED',
       remark: fd.get('remark')
     });
     onCreated();
@@ -179,11 +186,19 @@ function TaskModal({ feature, onClose, onCreated }: { feature: any; onClose: () 
         <div className="form-row">
           <div className="form-group"><label>供应商</label>
             <select name="vendorId"><option value="">-- 无 --</option>
-              {(feature.tasks || []).filter((t: any) => t.vendor).map((t: any) => <option key={t.vendor.id} value={t.vendor.id}>{t.vendor.name}</option>)}
+              {vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </div>
-          <div className="form-group"><label>备注</label><input name="remark" /></div>
+          <div className="form-group"><label>状态 *</label>
+            <select name="status" required>
+              <option value="NOT_STARTED">未开展</option>
+              <option value="IN_PROGRESS">进行中</option>
+              <option value="DELAYED">延误</option>
+              <option value="COMPLETED">完成</option>
+            </select>
+          </div>
         </div>
+        <div className="form-group"><label>备注</label><input name="remark" /></div>
         <div className="modal-footer"><button type="button" className="btn btn-grey" onClick={onClose}>取消</button><button type="submit" className="btn btn-primary">创建</button></div>
       </form>
     </Modal>
