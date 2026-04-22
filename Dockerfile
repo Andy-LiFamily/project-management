@@ -5,11 +5,8 @@ LABEL "framework"="express"
 WORKDIR /src
 RUN apk add --no-cache openssl
 
-# Clear any npm config that might force --omit=dev
-RUN npm config set omit ""
-
 COPY backend/package*.json ./
-RUN npm install --omit=dev=false
+RUN npm install
 
 COPY backend/ .
 RUN npx prisma generate
