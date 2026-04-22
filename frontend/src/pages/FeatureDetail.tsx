@@ -52,6 +52,26 @@ export default function FeatureDetail() {
     loadFeature();
   };
 
+  const downloadFile = async (file: any) => {
+    try {
+      const res = await api.get(`/api/files/${file.id}/download`);
+      const { data, mimeType, filename } = res.data;
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed', err);
+      alert('文件下載失敗');
+    }
+  };
+
   const createTask = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -70,7 +90,6 @@ export default function FeatureDetail() {
   if (!feature) return <div className="main-content"><div className="container" style={{ padding: '2rem', textAlign: 'center' }}>加载中...</div></div>;
 
   const featureFiles = (feature.files || []).filter((f: any) => f.entityType === 'FEATURE');
-  const taskFiles = (feature.tasks || []).flatMap((t: any) => (t.files || []).filter((f: any) => f.entityType === 'TASK'));
 
   return (
     <div className="main-content">
@@ -110,7 +129,7 @@ export default function FeatureDetail() {
           <ul className="file-list">
             {featureFiles.map((f: any) => (
               <li key={f.id}>
-                <a href={`https://projectman-backend.zeabur.app/uploads/${f.filename}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>{f.originalName}</a>
+                <span onClick={() => downloadFile(f)} style={{ color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }}>{f.originalName}</span>
                 <span style={{ color: '#999', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{(f.size / 1024).toFixed(1)} KB</span>
                 <button onClick={() => deleteFile(f.id)}>×</button>
               </li>
