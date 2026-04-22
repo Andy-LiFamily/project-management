@@ -6,7 +6,7 @@ WORKDIR /src
 RUN apk add --no-cache openssl
 
 COPY backend/package*.json ./
-RUN npm install
+RUN npm install --include=dev
 
 COPY backend/ .
 RUN npx prisma generate
