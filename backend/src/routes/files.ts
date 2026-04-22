@@ -72,17 +72,25 @@ router.get('/:entityType/:entityId', authenticate, async (req: AuthRequest, res:
 // IMPORTANT: route with download BEFORE /:id to avoid matching issue
 router.get('/:id/download', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    console.log(`Download request for file ID: ${req.params.id}`);
     const file = await prisma.file.findUnique({ where: { id: req.params.id } });
-    if (!file) return res.status(404).json({ error: '文件不存在' });
+    if (!file) {
+      console.log('File not found in DB');
+      return res.status(404).json({ error: '文件不存在' });
+    }
+    console.log(`File found: ${file.originalName}, path: ${file.path}`);
 
     const filePath = path.join(uploadDir, file.filename);
+    console.log(`Looking for file at: ${filePath}`);
 
     if (!fs.existsSync(filePath)) {
+      console.log('File does not exist on disk');
       return res.status(404).json({ error: '文件未找到' });
     }
 
     const buffer = fs.readFileSync(filePath);
     const base64 = buffer.toString('base64');
+    console.log(`File read successfully, size: ${buffer.length}`);
 
     res.json({
       filename: file.originalName,
