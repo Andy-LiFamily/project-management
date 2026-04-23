@@ -15,9 +15,11 @@ export default function FeatureDetail() {
   const [showEditTask, setShowEditTask] = useState<any>(null);
   const [summary, setSummary] = useState('');
   const [error, setError] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadFeature(); }, [id]);
+  useEffect(() => { api.get('/api/users').then(r => setUsers(r.data)); }, []);
 
   const loadFeature = () => api.get(`/api/features/${id}`).then(r => { setFeature(r.data); setSummary(r.data.summary || ''); });
 
@@ -208,12 +210,11 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
     if (allVendors.length === 0) api.get('/api/vendors').then(r => setVendors(r.data));
   }, []);
 
-  const handleStatusChange = (status: string, form: HTMLFormElement) => {
+  const handleStatusChange = (status: string) => {
     setSelectedStatus(status);
     if (status === 'NOT_STARTED') setProgress(0);
     else if (status === 'IN_PROGRESS') setProgress(25);
     else if (status === 'COMPLETED') setProgress(100);
-    // TERMINATED: keep current progress
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -223,7 +224,7 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
     if (mode === 'edit') {
       await api.put(`/api/tasks/${task.id}`, {
         workContent: fd.get('workContent'),
-        manager: fd.get('manager'),
+        managerId: fd.get('managerId') || null,
         vendorId: fd.get('vendorId') || null,
         status: fd.get('status'),
         progress: parseInt(fd.get('progress') as string) || 0,
@@ -233,7 +234,7 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
       await api.post(`/api/tasks/feature/${featureId}`, {
         workContent: fd.get('workContent'),
         targetDate: fd.get('targetDate'),
-        manager: fd.get('manager'),
+        managerId: fd.get('managerId') || null,
         vendorId: fd.get('vendorId') || null,
         status: fd.get('status') || 'NOT_STARTED',
         remark: fd.get('remark')
@@ -249,7 +250,12 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
         <div className="form-group"><label>工作内容 *</label><textarea name="workContent" rows={3} required defaultValue={task?.workContent || ''} placeholder="请详细描述任务内容" /></div>
         {mode === 'create' && <div className="form-group"><label>目标达成日期 *</label><input name="targetDate" type="date" required defaultValue={task?.targetDate?.split('T')[0] || ''} /></div>}
         <div className="form-row">
-          <div className="form-group"><label>负责人</label><input name="manager" defaultValue={task?.manager || ''} /></div>
+          <div className="form-group"><label>负责人</label>
+            <select name="managerId" defaultValue={task?.managerId || ''}>
+              <option value="">-- 无 --</option>
+              {users.map((u: any) => <option key={u.id} value={u.id}>{u.username}</option>)}
+            </select>
+          </div>
           <div className="form-group"><label>供应商</label>
             <select name="vendorId" defaultValue={task?.vendorId || ''}>
               <option value="">-- 无 --</option>
@@ -262,7 +268,7 @@ function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, m
             <input name="progress" type="number" min="0" max="100" value={progress} onChange={e => setProgress(parseInt(e.target.value) || 0)} readOnly={selectedStatus !== 'TERMINATED'} />
           </div>
           <div className="form-group"><label>状态 *</label>
-            <select name="status" required defaultValue={task?.status || 'NOT_STARTED'} onChange={e => handleStatusChange(e.target.value, e.target.form!)}>
+            <select name="status" required defaultValue={task?.status || 'NOT_STARTED'} onChange={e => handleStatusChange(e.target.value)}>
               <option value="NOT_STARTED">未开展</option>
               <option value="IN_PROGRESS">进行中</option>
               <option value="DELAYED">延误</option>

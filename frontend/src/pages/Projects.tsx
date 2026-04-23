@@ -11,8 +11,10 @@ export default function Projects() {
   const [projects, setProjects] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => { api.get('/api/projects').then(r => setProjects(r.data)); }, []);
+  useEffect(() => { api.get('/api/users').then(r => setUsers(r.data)); }, []);
 
   const create = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ export default function Projects() {
     await api.post('/api/projects', {
       name: fd.get('name'),
       client: fd.get('client'),
-      manager: fd.get('manager'),
+      managerId: fd.get('managerId') || null,
       startDate: fd.get('startDate'),
       dueDate: fd.get('dueDate'),
       remark: fd.get('remark')
@@ -50,7 +52,7 @@ export default function Projects() {
                   <tr key={p.id}>
                     <td><Link to={`/projects/${p.id}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>{p.name}</Link></td>
                     <td>{p.client}</td>
-                    <td>{p.manager || '-'}</td>
+                    <td>{p.manager?.username || '-'}</td>
                     <td>{new Date(p.startDate).toLocaleDateString('zh-CN')}</td>
                     <td>{new Date(p.dueDate).toLocaleDateString('zh-CN')}</td>
                     <td><span className={`badge ${p.status === 'DELAYED' ? 'badge-delayed' : p.status === 'COMPLETED' ? 'badge-completed' : p.status === 'IN_PROGRESS' ? 'badge-in-progress' : p.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[p.status]}</span></td>
@@ -69,7 +71,9 @@ export default function Projects() {
           <div className="form-group"><label>项目名称 *</label><input name="name" required /></div>
           <div className="form-row">
             <div className="form-group"><label>客户/内部</label><input name="client" value="内部" /></div>
-            <div className="form-group"><label>项目负责人</label><input name="manager" /></div>
+            <div className="form-group"><label>项目负责人</label>
+              <select name="managerId"><option value="">-- 无 --</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.username}</option>)}</select>
+            </div>
           </div>
           <div className="form-row">
             <div className="form-group"><label>启动日期 *</label><input name="startDate" type="date" required /></div>

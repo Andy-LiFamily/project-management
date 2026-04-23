@@ -16,11 +16,11 @@ export default function ProjectDetail() {
   const [summary, setSummary] = useState('');
   const [summaryError, setSummaryError] = useState('');
   const [vendors, setVendors] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [projectFiles, setProjectFiles] = useState<any[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProject(); }, [id]);
-  useEffect(() => { api.get('/api/vendors').then(r => setVendors(r.data)); }, []);
 
   const loadProject = () => {
     api.get(`/api/projects/${id}`).then(r => { setProject(r.data); setSummary(r.data.summary || ''); });
@@ -31,13 +31,18 @@ export default function ProjectDetail() {
     api.get(`/api/files/entity/PROJECT/${id}`).then(r => setProjectFiles(r.data)).catch(() => setProjectFiles([]));
   };
 
+  useEffect(() => {
+    api.get('/api/vendors').then(r => setVendors(r.data));
+    api.get('/api/users').then(r => setUsers(r.data));
+  }, []);
+
   const updateProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     await api.put(`/api/projects/${id}`, {
       name: fd.get('name'),
       client: fd.get('client'),
-      manager: fd.get('manager'),
+      managerId: fd.get('managerId') || null,
       vendorId: fd.get('vendorId') || null,
       startDate: fd.get('startDate'),
       dueDate: fd.get('dueDate'),
@@ -106,7 +111,7 @@ export default function ProjectDetail() {
       branchType: fd.get('branchType'),
       name: fd.get('name'),
       purpose: fd.get('purpose'),
-      manager: fd.get('manager'),
+      managerId: fd.get('managerId') || null,
       plannedStart: fd.get('plannedStart'),
       plannedEnd: fd.get('plannedEnd')
     });
@@ -132,7 +137,7 @@ export default function ProjectDetail() {
 
         <div className="detail-meta">
           <div className="item"><div className="label">客户/内部</div><div className="value">{project.client}</div></div>
-          <div className="item"><div className="label">项目负责人</div><div className="value">{project.manager || '-'}</div></div>
+          <div className="item"><div className="label">项目负责人</div><div className="value">{project.manager?.username || '-'}</div></div>
           <div className="item"><div className="label">供应商</div><div className="value">{project.vendor?.name || '-'}</div></div>
           <div className="item"><div className="label">启动日期</div><div className="value">{new Date(project.startDate).toLocaleDateString('zh-CN')}</div></div>
           <div className="item"><div className="label">计划完成</div><div className="value">{new Date(project.dueDate).toLocaleDateString('zh-CN')}</div></div>
@@ -181,7 +186,7 @@ export default function ProjectDetail() {
                   <tr key={f.id}>
                     <td><Link to={`/features/${f.id}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>{f.name}</Link></td>
                     <td>{branchMap[f.branchType]}</td>
-                    <td>{f.manager || '-'}</td>
+                    <td>{f.manager?.username || '-'}</td>
                     <td>{new Date(f.plannedStart).toLocaleDateString('zh-CN')}</td>
                     <td>{new Date(f.plannedEnd).toLocaleDateString('zh-CN')}</td>
                     <td><span className={`badge ${f.status === 'DELAYED' ? 'badge-delayed' : f.status === 'COMPLETED' ? 'badge-completed' : f.status === 'IN_PROGRESS' ? 'badge-in-progress' : f.status === 'TERMINATED' ? 'badge-delayed' : 'badge-not-started'}`}>{statusMap[f.status]}</span></td>
@@ -200,7 +205,9 @@ export default function ProjectDetail() {
           <div className="form-group"><label>功能名称 *</label><input name="name" required /></div>
           <div className="form-row">
             <div className="form-group"><label>分支类型 *</label><select name="branchType" required><option value="SOFTWARE">🖥️ 软件</option><option value="HARDWARE">⚙️ 硬件</option></select></div>
-            <div className="form-group"><label>负责人</label><input name="manager" /></div>
+            <div className="form-group"><label>负责人</label>
+              <select name="managerId"><option value="">-- 无 --</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.username}</option>)}</select>
+            </div>
           </div>
           <div className="form-group"><label>目的说明</label><textarea name="purpose" rows={2} /></div>
           <div className="form-row">
@@ -216,7 +223,12 @@ export default function ProjectDetail() {
           <div className="form-group"><label>项目名称 *</label><input name="name" defaultValue={project.name} required /></div>
           <div className="form-row">
             <div className="form-group"><label>客户/内部</label><input name="client" defaultValue={project.client} /></div>
-            <div className="form-group"><label>项目负责人</label><input name="manager" defaultValue={project.manager || ''} /></div>
+            <div className="form-group"><label>项目负责人</label>
+              <select name="managerId" defaultValue={project.managerId || ''}>
+                <option value="">-- 无 --</option>
+                {users.map((u: any) => <option key={u.id} value={u.id}>{u.username}</option>)}
+              </select>
+            </div>
           </div>
           <div className="form-row">
             <div className="form-group"><label>供应商</label>
