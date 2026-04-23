@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { api } from '../utils/api';
@@ -16,11 +16,20 @@ export default function ProjectDetail() {
   const [summary, setSummary] = useState('');
   const [summaryError, setSummaryError] = useState('');
   const [vendors, setVendors] = useState<any[]>([]);
+  const [projectFiles, setProjectFiles] = useState<any[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProject(); }, [id]);
   useEffect(() => { api.get('/api/vendors').then(r => setVendors(r.data)); }, []);
 
-  const loadProject = () => api.get(`/api/projects/${id}`).then(r => { setProject(r.data); setSummary(r.data.summary || ''); });
+  const loadProject = () => {
+    api.get(`/api/projects/${id}`).then(r => { setProject(r.data); setSummary(r.data.summary || ''); });
+    loadFiles();
+  };
+
+  const loadFiles = () => {
+    api.get(`/api/files/entity/PROJECT/${id}`).then(r => setProjectFiles(r.data)).catch(() => setProjectFiles([]));
+  };
 
   const updateProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,6 +58,45 @@ export default function ProjectDetail() {
     setSummaryError('');
     await api.put(`/api/projects/${id}/complete`, { summary, status: 'COMPLETED' });
     loadProject();
+  };
+
+  const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    let success = 0, failed = 0;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('entityType', 'PROJECT');
+      formData.append('entityId', id!);
+      try { await api.post('/api/files', formData); success++; } catch { failed++; }
+    }
+    if (fileRef.current) fileRef.current.value = '';
+    if (failed > 0) alert(`上傳完成：成功 ${success} 個，失敗 ${failed} 個`);
+    loadFiles();
+  };
+
+  const deleteFile = async (fileId: string) => {
+    if (!confirm('确定删除该文件？')) return;
+    await api.delete(`/api/files/${fileId}`);
+    loadFiles();
+  };
+
+  const downloadFile = async (file: any) => {
+    try {
+      const res = await api.get(`/api/files/${file.id}/download`);
+      const { data, mimeType, filename } = res.data;
+      if (!data) { alert('文件數據無效'); return; }
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert('文件下載失敗'); }
   };
 
   const createFeature = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -101,6 +149,23 @@ export default function ProjectDetail() {
             <button className="btn btn-primary" onClick={saveSummary}>💾 保存</button>
             <button className="btn btn-success" onClick={markComplete} disabled={project.status === 'COMPLETED'}>✅ 开发完成</button>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header"><h2>📎 项目文件</h2></div>
+          <div style={{ marginBottom: '1rem' }}>
+            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" multiple onChange={uploadFile} />
+          </div>
+          <ul className="file-list">
+            {projectFiles.map((f: any) => (
+              <li key={f.id}>
+                <span onClick={() => downloadFile(f)} style={{ color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }}>{f.originalName}</span>
+                <span style={{ color: '#999', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{(f.size / 1024).toFixed(1)} KB</span>
+                <button onClick={() => deleteFile(f.id)}>×</button>
+              </li>
+            ))}
+            {projectFiles.length === 0 && <li style={{ color: '#999' }}>暂无文件</li>}
+          </ul>
         </div>
 
         <div className="card">
