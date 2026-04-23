@@ -46,6 +46,7 @@ enum TaskStatus {
 enum EntityType {
   FEATURE
   TASK
+  PROJECT
 }
 
 // ============== MODELS ==============
