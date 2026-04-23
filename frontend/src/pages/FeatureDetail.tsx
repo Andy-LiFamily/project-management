@@ -195,13 +195,13 @@ export default function FeatureDetail() {
         </div>
       </div>
 
-      {showTask && <TaskModal vendors={[]} featureId={id} onClose={() => setShowTask(false)} onCreated={loadFeature} mode="create" />}
-      {showEditTask && <TaskModal vendors={[]} featureId={id} task={showEditTask} onClose={() => setShowEditTask(null)} onCreated={loadFeature} mode="edit" />}
+      {showTask && <TaskModal vendors={[]} users={users} featureId={id} onClose={() => setShowTask(false)} onCreated={loadFeature} mode="create" />}
+      {showEditTask && <TaskModal vendors={[]} users={users} featureId={id} task={showEditTask} onClose={() => setShowEditTask(null)} onCreated={loadFeature} mode="edit" />}
     </div>
   );
 }
 
-function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, mode }: any) {
+function TaskModal({ vendors: allVendors, featureId, task, onClose, onCreated, mode, users }: any) {
   const [vendors, setVendors] = useState(allVendors.length > 0 ? allVendors : []);
   const [selectedStatus, setSelectedStatus] = useState(task?.status || 'NOT_STARTED');
   const [progress, setProgress] = useState(task?.progress ?? (task?.status === 'IN_PROGRESS' ? 25 : task?.status === 'COMPLETED' ? 100 : 0));
