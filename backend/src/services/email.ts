@@ -62,7 +62,7 @@ export const sendFeatureCompleteEmail = async (
   const subject = `【功能完成】${project.name} - ${feature.name}`;
   const taskList = tasks.map(t => `
 任务：${t.workContent}
-负责人：${t.manager || '未指定'}
+负责人：${t.managerId || '未指定'}
 ${t.vendor ? '供应商：' + t.vendor.name : ''}
 目标日期：${t.targetDate.toLocaleDateString('zh-CN')}
 进度：${t.progress}%
@@ -77,13 +77,13 @@ ${t.vendor ? '供应商：' + t.vendor.name : ''}
 === 项目信息 ===
 项目名称：${project.name}
 客户/内部：${project.client}
-项目负责人：${project.manager || '未指定'}
+项目负责人：${project.managerId || '未指定'}
 启动日期：${project.startDate.toLocaleDateString('zh-CN')}
 
 === 功能信息 ===
 功能名称：${feature.name}
 分支类型：${feature.branchType === 'SOFTWARE' ? '软件' : '硬件'}
-负责人：${feature.manager || '未指定'}
+负责人：${feature.managerId || '未指定'}
 计划完成日期：${feature.plannedEnd.toLocaleDateString('zh-CN')}
 实际完成日期：${new Date().toLocaleDateString('zh-CN')}
 

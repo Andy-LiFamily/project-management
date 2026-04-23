@@ -24,7 +24,7 @@ const checkOverdueItems = async () => {
     await sendOverdueEmail(users, {
       projectName: feature.project.name,
       featureName: feature.name,
-      featureManager: feature.manager || undefined,
+      featureManager: feature.managerId || undefined,
       plannedDate: feature.plannedEnd,
       type: 'feature'
     });
@@ -54,8 +54,8 @@ const checkOverdueItems = async () => {
       projectName: task.feature.project.name,
       featureName: task.feature.name,
       taskContent: task.workContent,
-      taskManager: task.manager || undefined,
-      featureManager: task.feature.manager || undefined,
+      taskManager: task.managerId || undefined,
+      featureManager: task.feature.managerId || undefined,
       plannedDate: task.targetDate,
       type: 'task'
     });
