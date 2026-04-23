@@ -64,6 +64,8 @@ model User {
   // Relations
   createdProjects  Project[]  @relation("ProjectCreator")
   managedProjects Project[]  @relation("ProjectManager")
+  managedFeatures Feature[]  @relation("FeatureManager")
+  managedTasks    Task[]     @relation("TaskManager")
   createdFeatures Feature[]  @relation("FeatureCreator")
   createdTasks    Task[]     @relation("TaskCreator")
   uploadedFiles   File[]    @relation("FileUploader")
