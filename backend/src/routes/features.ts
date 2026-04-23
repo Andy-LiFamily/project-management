@@ -18,14 +18,14 @@ router.get('/project/:projectId', authenticate, async (req: AuthRequest, res: Re
 });
 
 router.post('/project/:projectId', authenticate, async (req: AuthRequest, res: Response) => {
-  const { branchType, name, purpose, manager, buildDate, plannedStart, plannedEnd, status } = req.body;
+  const { branchType, name, purpose, managerId, buildDate, plannedStart, plannedEnd, status } = req.body;
   const feature = await prisma.feature.create({
     data: {
       projectId: req.params.projectId,
       branchType,
       name,
       purpose,
-      manager,
+      managerId: managerId || null,
       buildDate: buildDate ? new Date(buildDate) : null,
       plannedStart: new Date(plannedStart),
       plannedEnd: new Date(plannedEnd),
@@ -72,8 +72,9 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
-  const { branchType, name, purpose, manager, buildDate, plannedStart, plannedEnd, status, summary } = req.body;
-  const data: any = { branchType, name, purpose, manager, summary };
+  const { branchType, name, purpose, managerId, buildDate, plannedStart, plannedEnd, status, summary } = req.body;
+  const data: any = { branchType, name, purpose, summary };
+  if (managerId !== undefined) data.managerId = managerId || null;
   if (buildDate) data.buildDate = new Date(buildDate);
   if (plannedStart) data.plannedStart = new Date(plannedStart);
   if (plannedEnd) data.plannedEnd = new Date(plannedEnd);

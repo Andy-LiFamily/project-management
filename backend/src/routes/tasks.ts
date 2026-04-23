@@ -17,7 +17,7 @@ router.get('/feature/:featureId', authenticate, async (req: AuthRequest, res: Re
 });
 
 router.post('/feature/:featureId', authenticate, async (req: AuthRequest, res: Response) => {
-  const { workContent, targetDate, manager, vendorId, remark } = req.body;
+  const { workContent, targetDate, managerId, vendorId, remark } = req.body;
   const feature = await prisma.feature.findUnique({ where: { id: req.params.featureId } });
   if (!feature) return res.status(404).json({ error: '功能不存在' });
   const task = await prisma.task.create({
@@ -26,7 +26,7 @@ router.post('/feature/:featureId', authenticate, async (req: AuthRequest, res: R
       projectId: feature.projectId,
       workContent,
       targetDate: new Date(targetDate),
-      manager,
+      managerId,
       vendorId,
       remark,
       createdById: req.user!.id
@@ -45,8 +45,8 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
-  const { workContent, targetDate, manager, vendorId, progress, status, remark } = req.body;
-  const data: any = { workContent, manager, vendorId, remark };
+  const { workContent, targetDate, managerId, vendorId, progress, status, remark } = req.body;
+  const data: any = { workContent, managerId, vendorId, remark };
   if (targetDate) data.targetDate = new Date(targetDate);
   if (progress !== undefined) data.progress = progress;
   if (status) data.status = status;
