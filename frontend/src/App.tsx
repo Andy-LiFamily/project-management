@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import FeatureDetail from './pages/FeatureDetail';
-import Vendors from './pages/Vendors';
+import AnimateIS20 from './pages/AnimateIS20';
 import Users from './pages/Users';
 
 function Navbar({ user, onLogout }: { user: any; onLogout: () => void }) {
